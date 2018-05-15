@@ -1,0 +1,21 @@
+{
+  "name": "beijing-hell",
+  "version": "0.1.0",
+  "description": "北京浮生记 2018 重制版",
+  "main": "index.js",
+  "author": "shadeofgod<zoubingwu@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.8.2",
+    "lerna": "^2.11.0"
+  },
+  "scripts": {
+    "boo": "lerna bootstrap",
+    "lint": "eslint packages/*/src/**"
+  },
+  "dependencies": {}
+}
