@@ -1,5 +1,5 @@
 import produce from 'immer';
-import { TIME_INCREMENT, TIME_RESET } from '../../actions/types';
+import { TIME_INCREMENT } from '../../actions/types';
 
 const initialState = {
   currentDay: 0,
@@ -16,12 +16,6 @@ export default function (state = initialState, action) {
         }
         break;
       }
-
-      case TIME_RESET: {
-        draft.currentDay = 0;
-        break;
-      }
-
       default:
     }
   });

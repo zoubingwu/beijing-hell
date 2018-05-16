@@ -46,3 +46,10 @@ export const updateCash = ({ lossPercent, gain, loss }) =>
 
 export const updateStorage = ({ quantity }) =>
   create(actionTypes.USER_UPDATE_STORAGE, { quantity });
+
+export const updateDebt = payback => create(actionTypes.USER_UPDATE_DEBT, { payback });
+
+export const updateHp = ({ damage, heal }) => create(actionTypes.USER_UPDATE_HP, { damage, heal });
+
+export const updateSavings = ({ deposit, withdraw }) =>
+  create(actionTypes.USER_UPDATE_SAVINGS, { deposit, withdraw });

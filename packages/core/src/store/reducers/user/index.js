@@ -5,6 +5,7 @@ import {
   USER_UPDATE_CASH,
   USER_UPDATE_HP,
   USER_UPDATE_STORAGE,
+  USER_UPDATE_SAVINGS,
 } from '../../actions/types';
 
 const initialState = {
@@ -26,7 +27,7 @@ export default function (state = initialState, action) {
       case USER_UPDATE_DEBT: {
         const { payback } = action;
 
-        if (payback && payback <= draft.debt) {
+        if (typeof payback === 'number' && payback <= draft.debt) {
           draft.debt -= payback;
           return;
         }
@@ -62,6 +63,21 @@ export default function (state = initialState, action) {
           draft.cash -= loss;
         } else if (gain) {
           draft.cash += gain;
+        }
+        break;
+      }
+
+      case USER_UPDATE_SAVINGS: {
+        const { deposit, withdraw } = action;
+
+        if (deposit <= draft.cash && deposit > 0) {
+          draft.cash -= deposit;
+          draft.savings += deposit;
+        }
+
+        if (withdraw > 0 && withdraw <= draft.savings) {
+          draft.cash += withdraw;
+          draft.savings -= withdraw;
         }
         break;
       }
