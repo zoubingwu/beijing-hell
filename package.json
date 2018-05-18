@@ -5,6 +5,10 @@
   "main": "index.js",
   "author": "shadeofgod<zoubingwu@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "url": "https://github.com/shadeofgod/beijing-hell",
+    "type": "git"
+  },
   "devDependencies": {
     "eslint": "^4.19.1",
     "eslint-config-airbnb": "^16.1.0",
@@ -16,6 +20,8 @@
   "scripts": {
     "boo": "lerna bootstrap",
     "build": "lerna run build",
+    "prepare": "npm run boo && npm run build",
+    "test": "lerna run test",
     "dev:hubot": "npm run build && node ./packages/bearyhubot/lib/index.js",
     "prod:hubot": "ENABLE_NODE_LOG=YES pm2 start ./packages/bearyhubot/lib/index.js --watch",
     "lint": "eslint packages/*/src/**"
