@@ -12,6 +12,17 @@ export function delay(time) {
   });
 }
 
+export function thousandSeperator(number) {
+  return String(number)
+    .split('')
+    .reverse()
+    .join('')
+    .replace(/(\d{3})(?=[^$])/g, '$1,')
+    .split('')
+    .reverse()
+    .join('');
+}
+
 /* eslint-disable no-param-reassign, object-curly-newline, prefer-destructuring, no-mixed-operators, max-len, function-paren-newline */
 export const getStatus = (store) => {
   const state = store.getState();
@@ -27,7 +38,7 @@ export const getStatus = (store) => {
       if (i.marketPrice === 0) {
         return `${i.id}. ${i.name}: 这里没这东西`;
       }
-      return `${i.id}. ${i.name}: ${i.marketPrice} 元`;
+      return `${i.id}. ${i.name}: ${thousandSeperator(i.marketPrice)} 元`;
     })
     .join('\n');
   const storage = `${state.user.storage} / ${state.user.maxStorage} 单位`;
@@ -36,7 +47,7 @@ export const getStatus = (store) => {
       ? state.goods.currentOwnGoods
         .map(i =>
           `${i.id}. ${i.name}\n    买入价格（平均）：${
-            i.price
+            thousandSeperator(i.price)
           } 元\n    数目: ${i.quantity}`)
         .join('\n')
       : '目前还是空空如也，家徒四壁';
@@ -156,7 +167,7 @@ export async function handleNewDay(store, reply, id) {
 
     await delay(2);
     const totalWealth = state.user.cash + state.user.savings - state.user.debt;
-    reply(`游戏结束，您的总共财富为 **${totalWealth} 元**`);
+    reply(`游戏结束，您的总共财富为 **${thousandSeperator(totalWealth)} 元**`);
     await delay(1.5);
 
     if (totalWealth <= 0) {
@@ -177,7 +188,7 @@ export async function handleNewDay(store, reply, id) {
 
       reply(`恭喜你, ${name}! 你进入了北京富人榜前十名！
 ${newTop10
-    .map((u, index) => `${index + 1}. ${u.name}: ${u.totalWealth} 元`)
+    .map((u, index) => `${index + 1}. ${u.name}: ${thousandSeperator(u.totalWealth)} 元`)
     .join('\n')}`);
 
       game.saveTop10(newTop10);

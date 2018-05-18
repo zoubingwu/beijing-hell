@@ -10,6 +10,7 @@ import {
   handleBuyItem,
   handleSellItem,
   delay,
+  thousandSeperator,
 } from './utils';
 import game from '../../game-core';
 
@@ -314,7 +315,7 @@ const commandHandlers = {
     const top10 = await storage.getItem('top10');
     const sortedTop10 = sortBy(top10, ['totalWealth']).reverse();
     reply(`北京富人榜前十名如下：
-${sortedTop10.map((u, index) => `${index + 1}. ${u.name}: ${u.totalWealth} 元`).join('\n')}`);
+${sortedTop10.map((u, index) => `${index + 1}. ${u.name}: ${thousandSeperator(u.totalWealth)} 元`).join('\n')}`);
   },
 };
 
