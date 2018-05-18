@@ -12,7 +12,7 @@ export function delay(time) {
   });
 }
 
-/* eslint-disable no-param-reassign, object-curly-newline, prefer-destructuring, no-mixed-operators, max-len */
+/* eslint-disable no-param-reassign, object-curly-newline, prefer-destructuring, no-mixed-operators, max-len, function-paren-newline */
 export const getStatus = (store) => {
   const state = store.getState();
 
@@ -88,7 +88,7 @@ export async function handleNewDay(store, reply, id) {
     store.dispatch(
       actions.updateHp({
         damage: randomHpEvent.loss,
-      })
+      }),
     );
     reply(randomHpEvent.desc);
     await delay(2);
@@ -98,12 +98,12 @@ export async function handleNewDay(store, reply, id) {
     actions.updateItemPrice({
       id: randomMarketEvent.relatedItem,
       factor: randomMarketEvent.factor,
-    })
+    }),
   );
   store.dispatch(
     actions.updateCash({
       lossPercent: randomCashEvent.lossPercent,
-    })
+    }),
   );
 
   reply(randomMarketEvent.desc);
@@ -151,9 +151,7 @@ export async function handleNewDay(store, reply, id) {
         store.dispatch(actions.sellGoods({ id: i.id }));
       });
     } else {
-      reply(
-        '俺已经在北京40天了，该回去结婚去了。反正货都卖掉了，直接启程回家吧。'
-      );
+      reply('俺已经在北京40天了，该回去结婚去了。反正货都卖掉了，直接启程回家吧。');
     }
 
     await delay(2);
