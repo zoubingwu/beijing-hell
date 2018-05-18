@@ -35,7 +35,7 @@ export default async function commands(clients) {
       });
 
     // if (message.uid !== '=bwS8J') {
-    //   reply(message.text);
+    //   reply('调试中，暂不开放');
     //   return;
     // }
 

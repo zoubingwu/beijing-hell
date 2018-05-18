@@ -16,7 +16,8 @@
   "scripts": {
     "boo": "lerna bootstrap",
     "build": "lerna run build",
-    "start:hubot": "ENABLE_NODE_LOG=YES lerna run pm2 start ./packages/bearyhubot/lib/index.js --watch",
+    "dev:hubot": "npm run build && node ./packages/bearyhubot/lib/index.js",
+    "prod:hubot": "ENABLE_NODE_LOG=YES pm2 start ./packages/bearyhubot/lib/index.js --watch",
     "lint": "eslint packages/*/src/**"
   }
 }
