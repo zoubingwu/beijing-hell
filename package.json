@@ -15,7 +15,8 @@
   },
   "scripts": {
     "boo": "lerna bootstrap",
+    "build": "lerna run build",
+    "start:hubot": "ENABLE_NODE_LOG=YES lerna run pm2 start ./packages/bearyhubot/lib/index.js --watch",
     "lint": "eslint packages/*/src/**"
-  },
-  "dependencies": {}
+  }
 }
