@@ -1,6 +1,8 @@
 import storeFactory, { locations, actions } from '@beijinghell/core';
 import find from 'lodash/find';
+import sortBy from 'lodash/sortBy';
 import isFinite from 'lodash/isFinite';
+import storage from 'node-persist';
 
 import {
   getStatus,
@@ -308,8 +310,9 @@ const commandHandlers = {
     reply(`去邮局寄钱还给了村长 ${payback} 元`);
   },
 
-  top10(options, reply) {
-    const { top10 } = game;
+  async top10(options, reply) {
+    let top10 = await storage.getItem('top10');
+    top10 = sortBy(top10, ['toalWealth']).reverse();
 
     reply(`北京富人榜前十名如下：
 ${top10.map((u, index) => `${index + 1}. ${u.name}: ${u.totalWealth} 元`).join('\n')}`);

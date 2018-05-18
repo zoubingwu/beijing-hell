@@ -10,4 +10,5 @@ withdraw: 输入 \`withdraw <数目>\` 来将钱取出银行，例如 \`withdraw
 hospital: 前往医院治疗
 heal: 输入 \`heal <数目>\` 来恢复健康值，需要前往医院花费现金才能治疗，例如 \`heal 50\`
 pay: 输入 \`pay <数目>\` 寄钱给村长还债
+top10: 显示北京富人榜 Top 10
 `;
