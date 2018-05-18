@@ -1,5 +1,6 @@
 import storeFactory from '@beijinghell/core';
 import storage from 'node-persist';
+import sortBy from 'lodash/sortBy';
 
 class Game {
   constructor() {
@@ -30,8 +31,8 @@ class Game {
   }
 
   async saveTop10(top10) {
-    this.top10 = top10;
-    await storage.setItem('top10', top10);
+    this.top10 = sortBy(top10, ['toalWealth']).reverse();
+    await storage.setItem('top10', this.top10);
   }
 
   async save(id, store) {
