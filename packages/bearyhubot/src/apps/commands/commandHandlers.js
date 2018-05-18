@@ -207,7 +207,7 @@ const commandHandlers = {
     if (typeof withdraw === 'undefined') {
       store.dispatch(actions.updateSavings({ withdraw: state.user.savings }));
       state = store.getState();
-      reply(`取出了俺全部的存款，现在身上现金为 ${state.user.savings} 元，俺可得小心点别被抢了`);
+      reply(`取出了俺全部的存款，现在身上现金为 ${state.user.cash} 元，俺可得小心点别被抢了`);
       return;
     }
 
