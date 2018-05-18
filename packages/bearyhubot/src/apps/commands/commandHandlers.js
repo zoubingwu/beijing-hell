@@ -164,17 +164,26 @@ const commandHandlers = {
       return;
     }
 
+    let state = store.getState();
     let [deposit] = options;
+    if (typeof deposit === 'undefined') {
+      store.dispatch(actions.updateSavings({ deposit: state.user.cash }));
+      state = store.getState();
+      reply(`存入了俺身上全部的现金，现在存款为 ${state.user.savings} 元`);
+      return;
+    }
+
     deposit = parseInt(deposit, 10);
 
-    if (deposit < 0 || !isFinite(deposit)) {
+    if (deposit <= 0 || !isFinite(deposit)) {
       reply('能不能好好存钱，别瞎b输命令。');
       return;
     }
 
-    const state = store.getState();
     if (deposit <= state.user.cash) {
       store.dispatch(actions.updateSavings({ deposit }));
+      state = store.getState();
+      reply(`存入了 ${deposit} 元现金，现在存款为 ${state.user.savings} 元`);
     } else {
       reply('你带这么多钱了吗？');
     }
@@ -189,7 +198,17 @@ const commandHandlers = {
       return;
     }
 
+    let state = store.getState();
+
     let [withdraw] = options;
+
+    if (typeof withdraw === 'undefined') {
+      store.dispatch(actions.updateSavings({ withdraw }));
+      state = store.getState();
+      reply(`取入了俺全部的存款，现在身上现金为 ${state.user.savings} 元，俺可得小心点别被抢了`);
+      return;
+    }
+
     withdraw = parseInt(withdraw, 10);
 
     if (withdraw < 0 || !isFinite(withdraw)) {
@@ -197,9 +216,10 @@ const commandHandlers = {
       return;
     }
 
-    const state = store.getState();
     if (withdraw <= state.user.savings) {
       store.dispatch(actions.updateSavings({ withdraw }));
+      state = store.getState();
+      reply(`取入了 ${withdraw} 元现金，现在现金为 ${state.user.cash} 元`);
     } else {
       reply('你带这么多钱了吗？');
     }
