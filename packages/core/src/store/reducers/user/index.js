@@ -29,6 +29,7 @@ export default function (state = initialState, action) {
 
         if (typeof payback === 'number' && payback <= draft.debt) {
           draft.debt -= payback;
+          draft.cash -= payback;
           return;
         }
 
