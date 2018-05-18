@@ -288,6 +288,12 @@ const commandHandlers = {
     reply(`去邮局寄钱还给了村长 ${payback} 元`);
   },
 
+  top10(options, reply) {
+    const { top10 } = game;
+
+    reply(`北京富人榜前十名如下：
+${top10.map((u, index) => `${index + 1}. ${u.name}: ${u.totalWealth} 元`).join('\n')}`);
+  },
 };
 
 export default commandHandlers;
