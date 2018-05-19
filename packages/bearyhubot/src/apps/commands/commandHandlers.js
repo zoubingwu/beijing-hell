@@ -306,7 +306,6 @@ const commandHandlers = {
       return;
     }
 
-    store.dispatch(actions.updateCash({ loss: payback }));
     store.dispatch(actions.updateDebt(payback));
     reply(`去邮局寄钱还给了村长 ${payback} 元`);
   },
