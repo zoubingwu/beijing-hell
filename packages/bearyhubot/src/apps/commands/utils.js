@@ -30,9 +30,9 @@ export const getStatus = (store) => {
   const time = `${state.time.currentDay + 1} / ${state.time.totalDay + 1}天`;
   const location = `${state.location.currentLocation.name}`;
   const hp = `${state.user.hitpoint}`;
-  const cash = `${state.user.cash} 元`;
-  const savings = `${state.user.savings} 元`;
-  const debt = `${state.user.debt} 元`;
+  const cash = `${thousandSeperator(state.user.cash)} 元`;
+  const savings = `${thousandSeperator(state.user.savings)} 元`;
+  const debt = `${thousandSeperator(state.user.debt)} 元`;
   const market = state.market.blackmarketGoods
     .map((i) => {
       if (i.marketPrice === 0) {
