@@ -17,7 +17,7 @@ GUI or CLI version may or may not be added in the future.
 
 ## Introduction
 
-Check the original game documentation [here](http://shadeofgod.github.io/beijing-hell)
+Check the original game documentation [here](http://shadeofgod.github.io/beijing-hell).
 
 ### Structure
 
