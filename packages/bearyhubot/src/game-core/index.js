@@ -18,11 +18,13 @@ class Game {
     const storedStates = await storage.getItem('archive');
 
     this.top10 = storedTop10 || [];
-    const keys = Object.keys(storedStates);
-    if (keys.length > 0) {
-      keys.forEach((key) => {
-        this.archive[key] = storeFactory(storedStates[key]);
-      });
+    if (storedStates) {
+      const keys = Object.keys(storedStates);
+      if (keys.length > 0) {
+        keys.forEach((key) => {
+          this.archive[key] = storeFactory(storedStates[key]);
+        });
+      }
     }
   }
 
