@@ -166,6 +166,7 @@ export async function handleNewDay(store, reply, id) {
     }
 
     await delay(2);
+    state = store.getState();
     const totalWealth = state.user.cash + state.user.savings - state.user.debt;
     reply(`游戏结束，您的总共财富为 **${thousandSeperator(totalWealth)} 元**`);
     await delay(1.5);
