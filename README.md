@@ -40,7 +40,7 @@ npm install
 npm run prepare
 ```
 
-## Deploy
+### Deploy
 
 dev mode:
 
