@@ -22,8 +22,8 @@
     "build": "lerna run build",
     "prepare": "npm run boo && npm run build",
     "test": "lerna run test",
-    "dev:hubot": "npm run build && node ./packages/bearyhubot/lib/index.js",
-    "prod:hubot": "ENABLE_NODE_LOG=YES pm2 start ./packages/bearyhubot/lib/index.js --watch",
+    "dev": "npm run build && node ./packages/bearyhubot/lib/index.js",
+    "prod": "ENABLE_NODE_LOG=YES pm2 start ./packages/bearyhubot/lib/index.js --watch",
     "lint": "eslint packages/*/src/**"
   }
 }

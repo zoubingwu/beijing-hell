@@ -29,15 +29,32 @@ Check the original game documentation [here](http://shadeofgod.github.io/beijing
 
 注：如果你需要部署到自己的机器人上，你需要在 `./packages/bearyhubot/src/` 目录下添加一个 `token.js` 文件：
 
-```js
-export const HUBOT_TOKEN = '<YOUR OWN HUBOT TOKEN>';
+```sh
+echo "export const HUBOT_TOKEN = '<YOUR OWN HUBOT TOKEN>';" > ./packages/bearyhubot/src/token.js
 ```
 
-### Dev
+### Prepare
 
 ```sh
 npm install
 npm run prepare
+```
+
+## Deploy
+
+dev mode:
+
+```sh
+npm run dev
+```
+
+prod mode:
+
+```sh
+# install pm2
+npm install pm2 -g
+
+npm run prod
 ```
 
 ## LICENSE
