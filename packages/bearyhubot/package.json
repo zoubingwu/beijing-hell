@@ -9,7 +9,7 @@
     "babel-polyfill": "^6.26.0",
     "bearychat": "^1.2.0",
     "bearychat-rtm-client": "^0.4.1",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.11",
     "node-persist": "^3.0.0",
     "ws": "^3.3.3"
   },
