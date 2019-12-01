@@ -3,3 +3,8 @@ node_modules/
 lib/
 token.js
 game-archive/
+.yarnrc
+yarn.lock
+package-lock.json
+.cache/
+dist/
