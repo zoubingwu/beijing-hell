@@ -10,20 +10,36 @@
     "type": "git"
   },
   "devDependencies": {
-    "eslint": "^4.19.1",
-    "eslint-config-airbnb": "^16.1.0",
-    "eslint-plugin-import": "^2.11.0",
-    "eslint-plugin-jsx-a11y": "^6.0.3",
-    "eslint-plugin-react": "^7.8.2",
-    "lerna": "^2.11.0"
+    "@babel/core": "^7.7.4",
+    "@babel/preset-react": "^7.7.4",
+    "husky": "^3.1.0",
+    "parcel-bundler": "^1.12.4",
+    "prettier": "^1.19.1",
+    "pretty-quick": "^2.0.1"
   },
   "scripts": {
-    "boo": "lerna bootstrap",
-    "build": "lerna run build",
-    "prepare": "npm run boo && npm run build",
-    "test": "lerna run test",
-    "dev": "npm run build && node ./packages/bearyhubot/lib/index.js",
-    "prod": "ENABLE_NODE_LOG=YES pm2 start ./packages/bearyhubot/lib/index.js --watch",
-    "lint": "eslint packages/*/src/**"
+    "start": "rm -rf ./dist/ && parcel index.html",
+    "build": "parcel build index.html"
+  },
+  "dependencies": {
+    "classnames": "^2.2.6",
+    "immer": "^5.0.0",
+    "reackt": "^0.3.1",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-draggable": "^4.1.0",
+    "react-jss": "^10.0.0",
+    "react-redux": "^7.1.3",
+    "redux": "^4.0.4"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-react"
+    ]
   }
 }
