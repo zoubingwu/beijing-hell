@@ -9,17 +9,19 @@
     "url": "https://github.com/shadeofgod/beijing-hell",
     "type": "git"
   },
+  "scripts": {
+    "start": "rm -rf ./dist/ && parcel index.html",
+    "build": "parcel build index.html --public-url /beijing-hell",
+    "deploy": "gh-pages -d dist"
+  },
   "devDependencies": {
     "@babel/core": "^7.7.4",
     "@babel/preset-react": "^7.7.4",
+    "gh-pages": "^2.2.0",
     "husky": "^3.1.0",
     "parcel-bundler": "^1.12.4",
     "prettier": "^1.19.1",
     "pretty-quick": "^2.0.1"
-  },
-  "scripts": {
-    "start": "rm -rf ./dist/ && parcel index.html",
-    "build": "parcel build index.html"
   },
   "dependencies": {
     "classnames": "^2.2.6",
