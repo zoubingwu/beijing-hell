@@ -169,11 +169,22 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
     }
   }, [game.inventory, inventorySelection]);
 
+  const visibleMarket = useMemo(
+    () => game.market.filter((item) => item.marketPrice > 0),
+    [game.market],
+  );
   const selectedMarket = game.market.find((item) => item.id === marketSelection);
   const selectedOwned = game.inventory.find((item) => item.id === inventorySelection);
   const parsedQuantity = Number(quantity);
   const canPlay = game.status === 'playing';
   const news = NEWS_HEADLINES[game.currentDay % NEWS_HEADLINES.length];
+
+  useEffect(() => {
+    if (!visibleMarket.some((item) => item.id === marketSelection)) {
+      const firstAvailable = visibleMarket[0];
+      if (firstAvailable) setMarketSelection(firstAvailable.id);
+    }
+  }, [marketSelection, visibleMarket]);
 
   const maximumBuy = useMemo(() => {
     if (!selectedMarket || selectedMarket.marketPrice <= 0) return 0;
@@ -210,7 +221,12 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
   return (
     <div className="gameRoot">
       <nav className="windowMenuBar" ref={menuRef} aria-label="游戏菜单">
-        <div className="menuSlot">
+        <div
+          className="menuSlot"
+          onMouseEnter={() => {
+            if (menu !== null) setMenu('system');
+          }}
+        >
           <button type="button" onClick={() => toggleMenu('system')}>系统(<u>S</u>)</button>
           {menu === 'system' ? (
             <div className="menuPopup" role="menu">
@@ -222,7 +238,12 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
             </div>
           ) : null}
         </div>
-        <div className="menuSlot">
+        <div
+          className="menuSlot"
+          onMouseEnter={() => {
+            if (menu !== null) setMenu('places');
+          }}
+        >
           <button type="button" onClick={() => toggleMenu('places')}>重要场所(<u>P</u>)</button>
           {menu === 'places' ? (
             <div className="menuPopup" role="menu">
@@ -235,7 +256,12 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
             </div>
           ) : null}
         </div>
-        <div className="menuSlot">
+        <div
+          className="menuSlot"
+          onMouseEnter={() => {
+            if (menu !== null) setMenu('help');
+          }}
+        >
           <button type="button" onClick={() => toggleMenu('help')}>帮助(<u>H</u>)</button>
           {menu === 'help' ? (
             <div className="menuPopup" role="menu">
@@ -252,7 +278,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
             <h2>地铁门口的黑市</h2>
             <div className="dataGrid marketGrid" role="listbox" aria-label="黑市商品">
               <div className="dataGridHeader"><span>商品</span><span>黑市价格</span></div>
-              {game.market.map((item) => (
+              {visibleMarket.map((item) => (
                 <button
                   type="button"
                   key={item.id}
@@ -267,7 +293,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
                   aria-selected={marketSelection === item.id}
                 >
                   <span>{item.name}</span>
-                  <span>{item.marketPrice > 0 ? formatMoney(item.marketPrice) : '没有货'}</span>
+                  <span>{formatMoney(item.marketPrice)}</span>
                 </button>
               ))}
             </div>
