@@ -290,14 +290,16 @@
   white-space: nowrap;
 }
 
-.statusDisplay,
-.statusMiniDisplay {
+.sevenSegmentDisplay {
+  --segment-on: #29be25;
+  --segment-glow: #30ef2a;
+  --segment-off: #0c310b;
   display: flex;
   height: 28px;
   min-width: 0;
   align-items: center;
   justify-content: center;
-  padding: 0 6px;
+  padding: 1px 6px;
   overflow: hidden;
   border-top: 2px solid #808080;
   border-left: 2px solid #808080;
@@ -305,24 +307,70 @@
   border-bottom: 2px solid #fff;
   box-shadow: inset 1px 1px #000, inset -1px -1px #303030;
   background: #000;
-  font-family: Impact, "Arial Black", "Courier New", monospace;
-  font-size: 22px;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 1px;
-  line-height: 1;
-  white-space: nowrap;
 }
 
-.statusDisplayPositive {
-  color: #009000;
-  text-shadow: 0 0 1px #00e000, 1px 1px 0 #003800;
+.sevenSegmentDisplay.sevenSegment-debt {
+  --segment-on: #d13b35;
+  --segment-glow: #ff5148;
+  --segment-off: #3c0e0c;
 }
 
-.statusDisplayDebt {
-  color: #c02020;
-  text-shadow: 0 0 1px #ff5048, 1px 1px 0 #480000;
+.sevenSegmentDigits {
+  display: flex;
+  height: 23px;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
+
+.sevenSegmentDigit {
+  position: relative;
+  width: 15px;
+  height: 23px;
+  flex: 0 0 15px;
+}
+
+.sevenSegment {
+  position: absolute;
+  display: block;
+  background: var(--segment-off);
+  opacity: .5;
+}
+
+.sevenSegment.lit {
+  z-index: 1;
+  background: var(--segment-on);
+  box-shadow: 0 0 3px var(--segment-glow);
+  opacity: 1;
+}
+
+.sevenSegment-a,
+.sevenSegment-d,
+.sevenSegment-g {
+  left: 3px;
+  width: 9px;
+  height: 3px;
+  clip-path: polygon(18% 0, 82% 0, 100% 50%, 82% 100%, 18% 100%, 0 50%);
+}
+
+.sevenSegment-a { top: 0; }
+.sevenSegment-g { top: 10px; }
+.sevenSegment-d { bottom: 0; }
+
+.sevenSegment-b,
+.sevenSegment-c,
+.sevenSegment-e,
+.sevenSegment-f {
+  width: 3px;
+  height: 9px;
+  clip-path: polygon(50% 0, 100% 18%, 100% 82%, 50% 100%, 0 82%, 0 18%);
+}
+
+.sevenSegment-b { top: 2px; right: 0; }
+.sevenSegment-c { right: 0; bottom: 2px; }
+.sevenSegment-e { bottom: 2px; left: 0; }
+.sevenSegment-f { top: 2px; left: 0; }
 
 .statusVitals {
   display: grid;
@@ -339,8 +387,13 @@
   gap: 3px;
 }
 
-.statusMiniDisplay {
-  font-size: 17px;
+.sevenSegmentDisplay.compact {
+  padding-right: 3px;
+  padding-left: 3px;
+}
+
+.sevenSegmentDisplay.compact .sevenSegmentDigits {
+  gap: 1px;
 }
 
 .locationPanel {

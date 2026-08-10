@@ -34,6 +34,7 @@ import {
 import type { ItemId, LocationId } from '../../game/types';
 import { useClickOutside } from '../../hooks/useClickOutside';
 import { Win98Dialog } from '../win98/Dialog';
+import { SevenSegmentDisplay } from './SevenSegmentDisplay';
 
 type DialogKind =
   | 'bank'
@@ -392,39 +393,46 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
             <div className="statusRows">
               <div className="statusMoneyRow">
                 <span>现金：</span>
-                <output
-                  className="statusDisplay statusDisplayPositive"
+                <SevenSegmentDisplay
+                  value={game.cash}
+                  tone="positive"
                   title={`${formatMoney(game.cash)} 元`}
-                >
-                  {formatMoney(game.cash)}
-                </output>
+                />
               </div>
               <div className="statusMoneyRow">
                 <span>存款：</span>
-                <output
-                  className="statusDisplay statusDisplayPositive"
+                <SevenSegmentDisplay
+                  value={game.savings}
+                  tone="positive"
                   title={`${formatMoney(game.savings)} 元`}
-                >
-                  {formatMoney(game.savings)}
-                </output>
+                />
               </div>
               <div className="statusMoneyRow">
                 <span>欠债：</span>
-                <output
-                  className="statusDisplay statusDisplayDebt"
+                <SevenSegmentDisplay
+                  value={game.debt}
+                  tone="debt"
                   title={`${formatMoney(game.debt)} 元`}
-                >
-                  {formatMoney(game.debt)}
-                </output>
+                />
               </div>
               <div className="statusVitals">
                 <div>
                   <span>健康：</span>
-                  <output className="statusMiniDisplay statusDisplayPositive">{game.hitpoint}</output>
+                  <SevenSegmentDisplay
+                    value={game.hitpoint}
+                    tone="positive"
+                    title={`健康值 ${game.hitpoint}`}
+                    compact
+                  />
                 </div>
                 <div>
                   <span>名声：</span>
-                  <output className="statusMiniDisplay statusDisplayPositive">{game.fame}</output>
+                  <SevenSegmentDisplay
+                    value={game.fame}
+                    tone="positive"
+                    title={`名声值 ${game.fame}`}
+                    compact
+                  />
                 </div>
               </div>
             </div>
