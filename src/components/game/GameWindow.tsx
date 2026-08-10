@@ -26,7 +26,6 @@ import { ITEM_BY_ID } from '../../game/data/items';
 import { LOCATIONS } from '../../game/data/locations';
 import { formatMoney } from '../../game/format';
 import {
-  selectCurrentLocation,
   selectDayNumber,
   selectGame,
   selectStorageUsed,
@@ -133,7 +132,6 @@ const HELP_TEXT = [
 export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
   const dispatch = useAppDispatch();
   const game = useAppSelector(selectGame);
-  const location = useAppSelector(selectCurrentLocation);
   const dayNumber = useAppSelector(selectDayNumber);
   const storageUsed = useAppSelector(selectStorageUsed);
   const totalWealth = useAppSelector(selectTotalWealth);
@@ -391,20 +389,36 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
         <div className="lowerArea">
           <fieldset className="statusPanel">
             <legend>您的状态</legend>
-            <dl>
-              <div><dt>当前：</dt><dd>第 {dayNumber}/{game.totalDays} 天</dd></div>
-              <div><dt>地点：</dt><dd>{location?.name ?? '未知'}</dd></div>
-              <div><dt>现金：</dt><dd>{formatMoney(game.cash)} 元</dd></div>
-              <div><dt>存款：</dt><dd>{formatMoney(game.savings)} 元</dd></div>
-              <div><dt>欠债：</dt><dd className={game.debt > 100_000 ? 'dangerText' : ''}>{formatMoney(game.debt)} 元</dd></div>
-              <div><dt>健康：</dt><dd>{game.hitpoint}/100</dd></div>
-              <div><dt>名声：</dt><dd>{game.fame}/100</dd></div>
-              <div><dt>资产：</dt><dd>{formatMoney(totalWealth)} 元</dd></div>
-            </dl>
+            <div className="statusRows">
+              <div className="statusMoneyRow">
+                <span>现金：</span>
+                <strong title={`${formatMoney(game.cash)} 元`}>{formatMoney(game.cash)}</strong>
+                <em>元</em>
+              </div>
+              <div className="statusMoneyRow">
+                <span>存款：</span>
+                <strong title={`${formatMoney(game.savings)} 元`}>{formatMoney(game.savings)}</strong>
+                <em>元</em>
+              </div>
+              <div className="statusMoneyRow">
+                <span>欠债：</span>
+                <strong
+                  className={game.debt > 100_000 ? 'dangerText' : ''}
+                  title={`${formatMoney(game.debt)} 元`}
+                >
+                  {formatMoney(game.debt)}
+                </strong>
+                <em>元</em>
+              </div>
+              <div className="statusVitals">
+                <div><span>健康：</span><strong>{game.hitpoint}/100</strong></div>
+                <div><span>名声：</span><strong>{game.fame}/100</strong></div>
+              </div>
+            </div>
           </fieldset>
 
           <fieldset className="locationPanel">
-            <legend>北京地铁站 · 点击前往（移动一次算一天）</legend>
+            <legend>北京地铁站</legend>
             <div className="locationGrid">
               {PRIMARY_LOCATIONS.map((target) => (
                 <button
@@ -442,11 +456,6 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
 
       <div className="newsTicker">
         <b>实时新闻：</b><span>{news}</span><span>{dayNumber}:1.00</span><b>《北京真理报》</b>
-      </div>
-      <div className="statusBar">
-        <span>{location?.name ?? '北京'}黑市</span>
-        <span>{game.status === 'playing' ? '游戏进行中 · 已自动保存' : '本局已经结束'}</span>
-        <span>容量 {storageUsed}/{game.maxStorage}</span>
       </div>
 
       {dialog === 'bank' ? (

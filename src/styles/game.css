@@ -3,7 +3,7 @@
   display: grid;
   height: 100%;
   min-height: 0;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--win-face);
 }
 
@@ -263,37 +263,56 @@
 .lowerArea {
   display: grid;
   min-height: 145px;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: minmax(230px, .85fr) minmax(320px, 1.35fr);
   gap: 6px;
 }
 
-.statusPanel dl {
+.statusRows {
   display: grid;
-  margin: 0;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px 8px;
+  height: 100%;
+  min-height: 118px;
+  grid-template-rows: repeat(3, 1fr) 1.15fr;
 }
 
-.statusPanel dl > div {
+.statusMoneyRow {
   display: grid;
-  grid-template-columns: 47px minmax(0, 1fr);
   min-width: 0;
-  min-height: 21px;
   align-items: center;
+  grid-template-columns: 52px minmax(0, 1fr) 20px;
   border-bottom: 1px dotted #808080;
 }
 
-.statusPanel dt,
-.statusPanel dd {
-  margin: 0;
+.statusMoneyRow strong,
+.statusVitals strong {
+  min-width: 0;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
 }
 
-.statusPanel dd {
-  overflow: hidden;
-  font-family: "Courier New", monospace;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.statusMoneyRow em {
+  padding-left: 4px;
+  font-style: normal;
+}
+
+.statusVitals {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.statusVitals > div {
+  display: grid;
+  min-width: 0;
+  align-items: center;
+  grid-template-columns: 48px minmax(0, 1fr);
+}
+
+.statusVitals strong {
+  font-size: 12px;
 }
 
 .dangerText {
@@ -336,17 +355,16 @@
 }
 
 .facilityBar {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
 .facilityBar .win98Button {
-  min-width: 0;
+  min-width: 74px;
+  flex: 1 1 74px;
   padding-right: 4px;
   padding-left: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -372,26 +390,6 @@
 .newsTicker span:nth-child(2) {
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.statusBar {
-  display: grid;
-  min-height: 23px;
-  padding: 2px;
-  grid-template-columns: 1fr 2fr 1fr;
-  gap: 3px;
-}
-
-.statusBar span {
-  min-width: 0;
-  padding: 3px 6px;
-  overflow: hidden;
-  border-top: 1px solid #808080;
-  border-left: 1px solid #808080;
-  border-right: 1px solid #fff;
-  border-bottom: 1px solid #fff;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .placeDialog p,
@@ -542,10 +540,6 @@
     grid-template-columns: repeat(3, minmax(75px, 1fr));
   }
 
-  .facilityBar {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .newsTicker {
     grid-template-columns: auto minmax(0, 1fr);
   }
@@ -557,7 +551,6 @@
 }
 
 @media (max-width: 430px) {
-  .statusPanel dl,
   .placeStats,
   .splitActions,
   .rentPlans,
