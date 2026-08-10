@@ -392,27 +392,40 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
             <div className="statusRows">
               <div className="statusMoneyRow">
                 <span>现金：</span>
-                <strong title={`${formatMoney(game.cash)} 元`}>{formatMoney(game.cash)}</strong>
-                <em>元</em>
+                <output
+                  className="statusDisplay statusDisplayPositive"
+                  title={`${formatMoney(game.cash)} 元`}
+                >
+                  {formatMoney(game.cash)}
+                </output>
               </div>
               <div className="statusMoneyRow">
                 <span>存款：</span>
-                <strong title={`${formatMoney(game.savings)} 元`}>{formatMoney(game.savings)}</strong>
-                <em>元</em>
+                <output
+                  className="statusDisplay statusDisplayPositive"
+                  title={`${formatMoney(game.savings)} 元`}
+                >
+                  {formatMoney(game.savings)}
+                </output>
               </div>
               <div className="statusMoneyRow">
                 <span>欠债：</span>
-                <strong
-                  className={game.debt > 100_000 ? 'dangerText' : ''}
+                <output
+                  className="statusDisplay statusDisplayDebt"
                   title={`${formatMoney(game.debt)} 元`}
                 >
                   {formatMoney(game.debt)}
-                </strong>
-                <em>元</em>
+                </output>
               </div>
               <div className="statusVitals">
-                <div><span>健康：</span><strong>{game.hitpoint}/100</strong></div>
-                <div><span>名声：</span><strong>{game.fame}/100</strong></div>
+                <div>
+                  <span>健康：</span>
+                  <output className="statusMiniDisplay statusDisplayPositive">{game.hitpoint}</output>
+                </div>
+                <div>
+                  <span>名声：</span>
+                  <output className="statusMiniDisplay statusDisplayPositive">{game.fame}</output>
+                </div>
               </div>
             </div>
           </fieldset>
