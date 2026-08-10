@@ -610,7 +610,23 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
         <Win98Dialog title="关于北京浮生记" onClose={() => setDialog(null)}>
           <div className="aboutDialog">
             <div className="aboutIcon">🌐</div>
-            <div><h3>北京浮生记 2.0</h3><p>Win98 风格 React + TypeScript 重制版</p><p>原作：Guoly Computing Company（1999-2001）</p><p>本项目规则参考仓库 master 分支。</p></div>
+            <div>
+              <h3>北京浮生记 2.0</h3>
+              <p>Win98 风格 React + TypeScript 重制版</p>
+              <p>原作：Guoly Computing Company（1999-2001）</p>
+              <p>本项目规则参考仓库 master 分支。</p>
+              <p>
+                GitHub：
+                <a
+                  className="aboutRepoLink"
+                  href="https://github.com/zoubingwu/beijing-hell"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  zoubingwu/beijing-hell
+                </a>
+              </p>
+            </div>
             <div className="dialogButtons"><button className="win98Button defaultButton" type="button" onClick={() => setDialog(null)}>确定</button></div>
           </div>
         </Win98Dialog>

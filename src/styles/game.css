@@ -564,6 +564,20 @@
   text-align: center;
 }
 
+.aboutRepoLink {
+  color: #000080;
+  overflow-wrap: anywhere;
+}
+
+.aboutRepoLink:visited {
+  color: #800080;
+}
+
+.aboutRepoLink:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: 1px;
+}
+
 .aboutDialog .dialogButtons {
   grid-column: 1 / -1;
 }
