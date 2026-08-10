@@ -1,0 +1,571 @@
+.gameRoot {
+  position: relative;
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  background: var(--win-face);
+}
+
+.windowMenuBar {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  min-height: 24px;
+  align-items: stretch;
+  padding: 1px 4px;
+  border-bottom: 1px solid #808080;
+  box-shadow: 0 1px #fff;
+}
+
+.menuSlot {
+  position: relative;
+}
+
+.menuSlot > button {
+  height: 21px;
+  padding: 1px 8px;
+  border: 0;
+  background: transparent;
+}
+
+.menuSlot > button:hover,
+.menuSlot > button:focus-visible {
+  color: #fff;
+  background: #000080;
+  outline: none;
+}
+
+.menuPopup {
+  position: absolute;
+  z-index: 50;
+  top: 22px;
+  left: 0;
+  display: flex;
+  width: 185px;
+  padding: 3px;
+  flex-direction: column;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #000;
+  border-bottom: 2px solid #000;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf;
+  background: var(--win-face);
+}
+
+.menuPopup button {
+  min-height: 23px;
+  padding: 3px 18px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+}
+
+.menuPopup button:hover,
+.menuPopup button:focus-visible {
+  color: #fff;
+  background: #000080;
+  outline: none;
+}
+
+.gameWorkspace {
+  display: grid;
+  min-height: 0;
+  padding: 5px;
+  grid-template-rows: minmax(190px, 1.45fr) minmax(75px, .62fr) minmax(145px, 1fr) auto;
+  gap: 5px;
+  overflow: auto;
+}
+
+.tradeArea {
+  display: grid;
+  min-height: 190px;
+  grid-template-columns: minmax(0, 1fr) 65px minmax(0, 1fr);
+  gap: 5px;
+}
+
+.tradePanel {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: 22px minmax(0, 1fr) auto;
+  gap: 3px;
+}
+
+.tradePanel h2 {
+  margin: 0;
+  font-size: 13px;
+  line-height: 22px;
+  text-align: center;
+}
+
+.dataGrid {
+  min-height: 0;
+  overflow: auto;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  box-shadow: inset 1px 1px #000;
+  background: #fff;
+}
+
+.dataGridHeader,
+.dataGridRow {
+  display: grid;
+  min-width: 260px;
+}
+
+.marketGrid .dataGridHeader,
+.marketGrid .dataGridRow {
+  grid-template-columns: minmax(155px, 1fr) 84px;
+}
+
+.inventoryGrid .dataGridHeader,
+.inventoryGrid .dataGridRow {
+  grid-template-columns: minmax(145px, 1fr) 76px 45px;
+}
+
+.dataGridHeader {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  background: var(--win-face);
+}
+
+.dataGridHeader span {
+  padding: 3px 5px;
+  border-top: 1px solid #fff;
+  border-left: 1px solid #fff;
+  border-right: 1px solid #808080;
+  border-bottom: 1px solid #808080;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dataGridRow {
+  width: 100%;
+  min-height: 21px;
+  padding: 0;
+  text-align: left;
+  border: 0;
+  background: #fff;
+}
+
+.dataGridRow:nth-child(odd) {
+  background: #f7f7f7;
+}
+
+.dataGridRow span {
+  min-width: 0;
+  padding: 3px 5px;
+  overflow: hidden;
+  border-right: 1px solid #e0e0e0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dataGridRow span:not(:first-child) {
+  text-align: right;
+  font-family: "Courier New", monospace;
+}
+
+.dataGridRow.selected {
+  color: #fff;
+  background: #000080;
+  outline: 1px dotted #fff;
+  outline-offset: -2px;
+}
+
+.emptyInventory {
+  padding: 18px 8px;
+  color: #666;
+  text-align: center;
+}
+
+.tradeControls {
+  display: flex;
+  min-height: 27px;
+  justify-content: center;
+  gap: 4px;
+}
+
+.tradeButton {
+  min-width: 86px;
+  font-weight: 700;
+}
+
+.quantityControl {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 5px;
+  text-align: center;
+}
+
+.quantityControl input {
+  width: 100%;
+  text-align: right;
+}
+
+.journalPanel,
+.statusPanel,
+.locationPanel {
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 8px 6px 5px;
+  border: 1px solid #808080;
+  box-shadow: inset 1px 1px #fff;
+}
+
+.journalPanel {
+  position: relative;
+}
+
+.journalPanel legend,
+.statusPanel legend,
+.locationPanel legend {
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+.journalScroll {
+  height: 100%;
+  max-height: 105px;
+  padding: 4px 75px 4px 6px;
+  overflow: auto;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  background: #fff;
+  user-select: text;
+}
+
+.journalScroll p {
+  margin: 0 0 4px;
+  line-height: 1.45;
+}
+
+.journal-good { color: #006400; }
+.journal-bad { color: #a00000; }
+.journal-warning { color: #8a5200; }
+
+.journalClear {
+  position: absolute;
+  right: 10px;
+  bottom: 9px;
+  min-width: 62px;
+}
+
+.lowerArea {
+  display: grid;
+  min-height: 145px;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.statusPanel dl {
+  display: grid;
+  margin: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px 8px;
+}
+
+.statusPanel dl > div {
+  display: grid;
+  grid-template-columns: 47px minmax(0, 1fr);
+  min-width: 0;
+  min-height: 21px;
+  align-items: center;
+  border-bottom: 1px dotted #808080;
+}
+
+.statusPanel dt,
+.statusPanel dd {
+  margin: 0;
+}
+
+.statusPanel dd {
+  overflow: hidden;
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dangerText {
+  color: #c00000;
+}
+
+.locationPanel {
+  overflow: auto;
+}
+
+.locationGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(70px, 1fr));
+  gap: 4px;
+}
+
+.locationButton {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.locationButton.current,
+.cityLocationGrid .current {
+  font-weight: 700;
+  background-image: repeating-linear-gradient(45deg, #fff 0, #fff 1px, #c0c0c0 1px, #c0c0c0 2px);
+}
+
+.browseCityButton {
+  display: block;
+  min-width: 130px;
+  margin: 5px auto 0;
+}
+
+.cityLocationGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(100px, 1fr));
+  gap: 7px;
+}
+
+.facilityBar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.facilityBar .win98Button {
+  min-width: 0;
+  padding-right: 4px;
+  padding-left: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bossButton {
+  font-weight: 700;
+}
+
+.newsTicker {
+  display: grid;
+  min-height: 24px;
+  padding: 3px 6px;
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 8px;
+  overflow: hidden;
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #808080;
+  color: #000080;
+  background: #fff;
+  white-space: nowrap;
+}
+
+.newsTicker span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusBar {
+  display: grid;
+  min-height: 23px;
+  padding: 2px;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 3px;
+}
+
+.statusBar span {
+  min-width: 0;
+  padding: 3px 6px;
+  overflow: hidden;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeDialog p,
+.rentDialog p,
+.scoreDialog p,
+.helpDialog p {
+  line-height: 1.55;
+}
+
+.placeStats {
+  display: grid;
+  padding: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  background: #fff;
+}
+
+.splitActions {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.numberAction {
+  display: grid;
+  gap: 6px;
+}
+
+.numberAction label {
+  display: grid;
+  gap: 4px;
+}
+
+.numberAction input {
+  width: 100%;
+}
+
+.rentPlans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.rentPlan {
+  display: flex;
+  min-height: 75px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  text-align: left;
+}
+
+.scoreDialog ol {
+  margin: 0;
+  padding: 4px 4px 4px 32px;
+  border: 2px inset #fff;
+  background: #fff;
+}
+
+.scoreDialog li {
+  display: flex;
+  min-height: 27px;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dotted #808080;
+}
+
+.helpDialog h3,
+.aboutDialog h3,
+.resultDialog h3 {
+  margin: 5px 0 10px;
+}
+
+.helpDialog ul {
+  padding-left: 22px;
+  line-height: 1.55;
+}
+
+.aboutDialog {
+  display: grid;
+  grid-template-columns: 65px 1fr;
+  align-items: start;
+  gap: 12px;
+}
+
+.aboutIcon,
+.resultIcon {
+  font-size: 48px;
+  text-align: center;
+}
+
+.aboutDialog .dialogButtons {
+  grid-column: 1 / -1;
+}
+
+.resultDialog {
+  text-align: center;
+}
+
+.resultDialog b {
+  font-size: 18px;
+}
+
+@media (max-width: 700px) {
+  .gameWorkspace {
+    display: block;
+    overflow: auto;
+  }
+
+  .tradeArea {
+    grid-template-columns: 1fr;
+  }
+
+  .tradePanel {
+    min-height: 225px;
+    margin-bottom: 5px;
+  }
+
+  .quantityControl {
+    display: grid;
+    margin: 6px 0;
+    grid-template-columns: auto 90px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .journalPanel,
+  .lowerArea,
+  .facilityBar {
+    margin-top: 6px;
+  }
+
+  .journalPanel {
+    height: 110px;
+  }
+
+  .lowerArea {
+    grid-template-columns: 1fr;
+  }
+
+  .locationGrid {
+    grid-template-columns: repeat(3, minmax(75px, 1fr));
+  }
+
+  .facilityBar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .newsTicker {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .newsTicker span:nth-child(3),
+  .newsTicker b:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .statusPanel dl,
+  .placeStats,
+  .splitActions,
+  .rentPlans,
+  .cityLocationGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .locationGrid {
+    grid-template-columns: repeat(2, minmax(75px, 1fr));
+  }
+}

@@ -1,10 +1,7 @@
 node_modules/
-*.log
-lib/
-token.js
-game-archive/
-.yarnrc
-yarn.lock
-package-lock.json
-.cache/
 dist/
+*.log
+.DS_Store
+.vite/
+.pi-subagents/
+*.tsbuildinfo

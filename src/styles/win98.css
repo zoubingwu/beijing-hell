@@ -1,0 +1,436 @@
+.desktop {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  padding-bottom: var(--taskbar-height);
+  cursor: url('../assets/cursor.png'), default;
+  background-color: #008080;
+  background-image: url('../assets/clouds.jpg');
+  background-position: center;
+  background-size: cover;
+  user-select: none;
+}
+
+.desktopIcons {
+  position: absolute;
+  inset: 12px auto auto 8px;
+  z-index: 1;
+}
+
+.desktopShortcut {
+  display: flex;
+  width: 80px;
+  padding: 2px 4px 5px;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: #fff;
+  border: 0;
+  background: transparent;
+  cursor: inherit;
+}
+
+.desktopShortcut img {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+.desktopShortcut span {
+  width: 100%;
+  padding: 1px 2px;
+  line-height: 14px;
+  text-align: center;
+  text-shadow: 1px 1px #000;
+}
+
+.desktopShortcut.selected span,
+.desktopShortcut:focus span {
+  background: var(--win-select);
+  outline: 1px dotted #fff;
+  outline-offset: -2px;
+}
+
+.win98Button,
+.windowControls button {
+  position: relative;
+  min-height: 23px;
+  padding: 2px 8px;
+  border: 0;
+  border-top: 2px solid var(--win-highlight);
+  border-left: 2px solid var(--win-highlight);
+  border-right: 2px solid var(--win-dark);
+  border-bottom: 2px solid var(--win-dark);
+  box-shadow:
+    inset -1px -1px var(--win-shadow),
+    inset 1px 1px var(--win-light);
+  background: var(--win-face);
+  cursor: default;
+}
+
+.win98Button:not(:disabled):active,
+.win98Button.pressed,
+.win98Button.active {
+  padding: 3px 7px 1px 9px;
+  border-top-color: var(--win-dark);
+  border-left-color: var(--win-dark);
+  border-right-color: var(--win-highlight);
+  border-bottom-color: var(--win-highlight);
+  box-shadow:
+    inset 1px 1px var(--win-shadow),
+    inset -1px -1px var(--win-light);
+}
+
+.defaultButton {
+  outline: 1px solid #000;
+  outline-offset: 1px;
+}
+
+.taskbar {
+  position: absolute;
+  z-index: 2000;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  height: var(--taskbar-height);
+  align-items: center;
+  padding: 2px;
+  border-top: 1px solid #fff;
+  background: var(--win-face);
+  box-shadow: inset 0 1px var(--win-light);
+}
+
+.startButton {
+  display: flex;
+  min-width: 65px;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+  padding-left: 5px;
+}
+
+.startButton img,
+.taskButton img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.taskbarDivider {
+  align-self: stretch;
+  width: 3px;
+  margin: 1px 4px;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #fff;
+}
+
+.taskbarTasks {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-self: stretch;
+}
+
+.taskButton {
+  display: flex;
+  width: min(190px, 35vw);
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taskButton.active {
+  background-color: #fff;
+  background-image: repeating-linear-gradient(45deg, #fff 0, #fff 1px, #c0c0c0 1px, #c0c0c0 2px);
+}
+
+.tray {
+  display: flex;
+  height: 24px;
+  min-width: 76px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 6px;
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  box-shadow: inset 1px 1px #0002;
+}
+
+.startMenu {
+  position: absolute;
+  z-index: 2100;
+  bottom: var(--taskbar-height);
+  left: 2px;
+  display: flex;
+  width: 270px;
+  min-height: 235px;
+  padding: 3px;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #000;
+  border-bottom: 2px solid #000;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf;
+  background: var(--win-face);
+}
+
+.startMenuBrand {
+  display: flex;
+  width: 31px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 3px;
+  color: #fff;
+  background: #808080;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  letter-spacing: 1px;
+  font-size: 16px;
+}
+
+.startMenuBrand span {
+  color: #c0c0c0;
+  font-weight: 700;
+}
+
+.startMenuItems {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.startMenuItems > button {
+  display: flex;
+  min-height: 62px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+}
+
+.startMenuItems > button:hover,
+.startMenuItems > button:focus-visible {
+  color: #fff;
+  background: var(--win-select);
+  outline: none;
+}
+
+.startMenuItems img,
+.startMenuGlyph {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  text-align: center;
+  font-size: 28px;
+}
+
+.startMenuItems button span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.startMenuItems small {
+  font-size: 11px;
+}
+
+.startMenuSeparator,
+.menuSeparator {
+  height: 2px;
+  margin: 2px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #fff;
+}
+
+.win98Window {
+  position: absolute;
+  z-index: 100;
+  display: flex;
+  width: min(720px, calc(100vw - 8px));
+  height: min(650px, calc(100vh - var(--taskbar-height) - 8px));
+  min-width: min(540px, calc(100vw - 8px));
+  min-height: min(470px, calc(100vh - var(--taskbar-height) - 8px));
+  flex-direction: column;
+  padding: 3px;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #000;
+  border-bottom: 2px solid #000;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf;
+  background: var(--win-face);
+}
+
+.win98Window.maximized {
+  inset: 0 0 var(--taskbar-height) 0;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.titleBar {
+  display: flex;
+  height: 23px;
+  min-height: 23px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 3px;
+  color: #fff;
+  background: var(--win-blue);
+  background: linear-gradient(90deg, #000080, #1084d0);
+}
+
+.titleBarText {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.titleBarText img {
+  width: 16px;
+  height: 16px;
+}
+
+.titleBarText strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.windowControls {
+  display: flex;
+  gap: 2px;
+}
+
+.windowControls button {
+  display: grid;
+  width: 19px;
+  min-width: 19px;
+  height: 19px;
+  min-height: 19px;
+  place-items: center;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 12px;
+}
+
+.windowControls button:active {
+  border-top-color: #000;
+  border-left-color: #000;
+  border-right-color: #fff;
+  border-bottom-color: #fff;
+}
+
+.windowBody {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.win98Input {
+  height: 23px;
+  min-width: 0;
+  padding: 2px 4px;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  box-shadow: inset 1px 1px #000;
+  color: #000;
+  background: #fff;
+}
+
+.dialogBackdrop {
+  position: absolute;
+  z-index: 500;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgb(0 0 0 / 12%);
+}
+
+.win98Dialog {
+  width: min(430px, 100%);
+  max-height: min(540px, calc(100% - 12px));
+  padding: 3px;
+  overflow: hidden;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-right: 2px solid #000;
+  border-bottom: 2px solid #000;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf, 3px 3px 0 #0008;
+  background: var(--win-face);
+}
+
+.win98Dialog.small { width: min(350px, 100%); }
+.win98Dialog.large { width: min(580px, 100%); }
+
+.dialogTitleBar {
+  margin-bottom: 3px;
+}
+
+.dialogContent {
+  max-height: calc(min(540px, 100vh - 100px) - 31px);
+  padding: 12px;
+  overflow: auto;
+  user-select: text;
+}
+
+.dialogButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.dialogButtons .win98Button {
+  min-width: 80px;
+}
+
+.dialogForm p,
+.confirmDialog p {
+  margin: 0 0 16px;
+  line-height: 1.6;
+}
+
+.dialogForm label {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+}
+
+@media (max-width: 560px) {
+  .win98Window {
+    inset: 2px 2px var(--taskbar-height) 2px !important;
+    width: auto;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .tray {
+    min-width: 58px;
+    padding: 0 3px;
+  }
+
+  .tray > span {
+    display: none;
+  }
+}

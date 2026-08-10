@@ -1,0 +1,59 @@
+:root {
+  font-family: Tahoma, "Microsoft YaHei", "SimSun", sans-serif;
+  color: #000;
+  background: #008080;
+  font-synthesis: none;
+  --win-face: #c0c0c0;
+  --win-light: #dfdfdf;
+  --win-highlight: #fff;
+  --win-shadow: #808080;
+  --win-dark: #000;
+  --win-blue: #000080;
+  --win-select: #000080;
+  --taskbar-height: 30px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  min-width: 320px;
+  font-size: 12px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: #000;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+button:disabled {
+  color: #808080;
+  text-shadow: 1px 1px #fff;
+}
+
+::selection {
+  color: #fff;
+  background: #000080;
+}
