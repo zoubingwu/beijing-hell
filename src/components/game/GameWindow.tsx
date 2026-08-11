@@ -296,27 +296,9 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
                 </button>
               ))}
             </div>
-            <div className="tradeControls">
-              <button
-                className="win98Button tradeButton"
-                type="button"
-                disabled={!canPlay || !selectedMarket || selectedMarket.marketPrice === 0}
-                onClick={executeBuy}
-              >
-                买进　=&gt;
-              </button>
-              <button
-                className="win98Button"
-                type="button"
-                disabled={!canPlay || maximumBuy === 0}
-                onClick={() => setQuantity(String(maximumBuy))}
-              >
-                最大 {maximumBuy}
-              </button>
-            </div>
           </section>
 
-          <div className="quantityControl">
+          <div className="tradeActions" aria-label="交易操作">
             <label htmlFor="trade-quantity">数量</label>
             <input
               id="trade-quantity"
@@ -327,6 +309,40 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
               value={quantity}
               onChange={(event) => setQuantity(event.target.value)}
             />
+            <div className="tradeActionButtons">
+              <button
+                className="win98Button tradeButton"
+                type="button"
+                disabled={!canPlay || !selectedOwned}
+                onClick={executeSell}
+              >
+                &lt;= 卖出
+              </button>
+              <button
+                className="win98Button tradeButton"
+                type="button"
+                disabled={!canPlay || !selectedMarket || selectedMarket.marketPrice === 0}
+                onClick={executeBuy}
+              >
+                买进 =&gt;
+              </button>
+              <button
+                className="win98Button"
+                type="button"
+                disabled={!canPlay || !selectedOwned}
+                onClick={() => setQuantity(String(selectedOwned?.quantity ?? 1))}
+              >
+                全部卖出
+              </button>
+              <button
+                className="win98Button"
+                type="button"
+                disabled={!canPlay || maximumBuy === 0}
+                onClick={() => setQuantity(String(maximumBuy))}
+              >
+                最大买进
+              </button>
+            </div>
           </div>
 
           <section className="tradePanel inventoryPanel" aria-label="您的出租屋">
@@ -353,24 +369,6 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
                   <span>{item.quantity}</span>
                 </button>
               ))}
-            </div>
-            <div className="tradeControls">
-              <button
-                className="win98Button tradeButton"
-                type="button"
-                disabled={!canPlay || !selectedOwned}
-                onClick={executeSell}
-              >
-                &lt;=　卖出
-              </button>
-              <button
-                className="win98Button"
-                type="button"
-                disabled={!canPlay || !selectedOwned}
-                onClick={() => setQuantity(String(selectedOwned?.quantity ?? 1))}
-              >
-                全部
-              </button>
             </div>
           </section>
         </div>

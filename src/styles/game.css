@@ -80,7 +80,7 @@
 .tradeArea {
   display: grid;
   min-height: 190px;
-  grid-template-columns: minmax(0, 1fr) 65px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 154px minmax(0, 1fr);
   gap: 5px;
 }
 
@@ -88,7 +88,7 @@
   display: grid;
   min-width: 0;
   min-height: 0;
-  grid-template-rows: 22px minmax(0, 1fr) auto;
+  grid-template-rows: 22px minmax(0, 1fr);
   gap: 3px;
 }
 
@@ -183,20 +183,9 @@
   text-align: center;
 }
 
-.tradeControls {
+.tradeActions {
   display: flex;
-  min-height: 27px;
-  justify-content: center;
-  gap: 4px;
-}
-
-.tradeButton {
-  min-width: 86px;
-  font-weight: 700;
-}
-
-.quantityControl {
-  display: flex;
+  min-width: 0;
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
@@ -204,9 +193,26 @@
   text-align: center;
 }
 
-.quantityControl input {
+.tradeActions input {
   width: 100%;
   text-align: right;
+}
+
+.tradeActionButtons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.tradeActionButtons .win98Button {
+  min-width: 0;
+  padding-right: 4px;
+  padding-left: 4px;
+  white-space: nowrap;
+}
+
+.tradeActionButtons .tradeButton {
+  font-weight: 700;
 }
 
 .journalPanel,
@@ -605,12 +611,9 @@
     margin-bottom: 5px;
   }
 
-  .quantityControl {
-    display: grid;
-    margin: 6px 0;
-    grid-template-columns: auto 90px;
-    align-items: center;
-    justify-content: center;
+  .tradeActions {
+    width: min(100%, 320px);
+    margin: 8px auto;
   }
 
   .journalPanel,
