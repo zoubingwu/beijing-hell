@@ -2,6 +2,7 @@
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   padding-bottom: var(--taskbar-height);
   cursor: url('../assets/cursor.png'), default;
@@ -96,7 +97,7 @@
   display: flex;
   height: var(--taskbar-height);
   align-items: center;
-  padding: 2px;
+  padding: 2px 2px calc(2px + var(--safe-area-bottom));
   border-top: 1px solid #fff;
   background: var(--win-face);
   box-shadow: inset 0 1px var(--win-light);
@@ -260,10 +261,13 @@
   display: flex;
   width: min(720px, calc(100vw - 8px));
   height: min(650px, calc(100vh - var(--taskbar-height) - 8px));
+  height: min(650px, calc(100dvh - var(--taskbar-height) - 8px));
   min-width: min(540px, calc(100vw - 8px));
   min-height: min(470px, calc(100vh - var(--taskbar-height) - 8px));
+  min-height: min(470px, calc(100dvh - var(--taskbar-height) - 8px));
   max-width: calc(100vw - 8px);
   max-height: calc(100vh - var(--taskbar-height) - 8px);
+  max-height: calc(100dvh - var(--taskbar-height) - 8px);
   flex-direction: column;
   overflow: hidden;
   resize: none;
@@ -413,6 +417,7 @@
 
 .dialogContent {
   max-height: calc(min(540px, 100vh - 100px) - 31px);
+  max-height: calc(min(540px, 100dvh - 100px) - 31px);
   padding: 12px;
   overflow: auto;
   user-select: text;

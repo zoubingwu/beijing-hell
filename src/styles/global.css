@@ -10,7 +10,8 @@
   --win-dark: #000;
   --win-blue: #000080;
   --win-select: #000080;
-  --taskbar-height: 30px;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --taskbar-height: calc(30px + var(--safe-area-bottom));
 }
 
 * {
