@@ -14,7 +14,7 @@ export default function App() {
   const dispatch = useAppDispatch();
   const game = useAppSelector(selectGame);
   const day = useAppSelector(selectDayNumber);
-  const [gameOpen, setGameOpen] = useState(false);
+  const [gameOpen, setGameOpen] = useState(true);
   const [minimized, setMinimized] = useState(false);
   const [maximized, setMaximized] = useState(false);
   const [startOpen, setStartOpen] = useState(false);
