@@ -97,7 +97,7 @@
   display: flex;
   height: var(--taskbar-height);
   align-items: center;
-  padding: 2px 2px calc(2px + var(--safe-area-bottom));
+  padding: 2px;
   border-top: 1px solid #fff;
   background: var(--win-face);
   box-shadow: inset 0 1px var(--win-light);
