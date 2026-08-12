@@ -1,14 +1,21 @@
 import { CASH_EVENTS, FREE_ITEM_EVENTS, HEALTH_EVENTS, MARKET_EVENTS } from './data/events';
 import { ITEMS } from './data/items';
+import type { GameRuntime } from './runtime';
 import type { ItemDefinition, MarketQuote, TravelRoll } from './types';
 
-export type RandomSource = () => number;
+export type NextInt = GameRuntime['nextInt'];
+type RandomSource = Pick<GameRuntime, 'nextInt'> | NextInt;
 
-export function randomInt(maxExclusive: number, random: RandomSource = Math.random): number {
-  return Math.floor(random() * maxExclusive);
+const nextIntFrom = (random: RandomSource, maxExclusive: number): number =>
+  typeof random === 'function'
+    ? random(maxExclusive)
+    : random.nextInt(maxExclusive);
+
+export function randomInt(maxExclusive: number, random: RandomSource): number {
+  return nextIntFrom(random, maxExclusive);
 }
 
-export function pick<T>(values: readonly T[], random: RandomSource = Math.random): T {
+export function pick<T>(values: readonly T[], random: RandomSource): T {
   const value = values[randomInt(values.length, random)];
   if (value === undefined) {
     throw new Error('不能从空数组中随机取值');
@@ -33,7 +40,7 @@ function chooseDistinctItems(
 
 export function createMarket(
   soldOutCount: number,
-  random: RandomSource = Math.random,
+  random: RandomSource,
 ): MarketQuote[] {
   const soldOut = chooseDistinctItems(ITEMS, soldOutCount, random);
   return ITEMS.map((item) => ({
@@ -49,7 +56,7 @@ export function createTravelRoll(
   destinationId: TravelRoll['destinationId'],
   currentDay: number,
   totalDays: number,
-  random: RandomSource = Math.random,
+  random: RandomSource,
 ): TravelRoll {
   const finalDayIncoming = currentDay >= totalDays - 2;
   const market = createMarket(finalDayIncoming ? 0 : 3, random);
@@ -65,7 +72,9 @@ export function createTravelRoll(
   const healthEvent = randomInt(1000, random) % candidateHealthEvent.frequency === 0
     ? candidateHealthEvent
     : undefined;
-  const freeItemEvent = random() < 0.12 ? pick(FREE_ITEM_EVENTS, random) : undefined;
+  const freeItemEvent = randomInt(100, random) < 12
+    ? pick(FREE_ITEM_EVENTS, random)
+    : undefined;
 
   return {
     destinationId,

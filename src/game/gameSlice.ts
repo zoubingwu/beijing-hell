@@ -9,6 +9,7 @@ import { ITEM_BY_ID } from './data/items';
 import { LOCATIONS, LOCATION_BY_ID } from './data/locations';
 import { clamp } from './format';
 import { createMarket, createTravelRoll, pick } from './random';
+import { gameRuntime, type GameRuntime } from './runtime';
 import type {
   GameState,
   HighScore,
@@ -22,7 +23,7 @@ import type {
 const MAX_JOURNAL_ENTRIES = 80;
 
 type GameRootState = { game: GameState };
-type GameThunk = ThunkAction<void, GameRootState, unknown, UnknownAction>;
+type GameThunk = ThunkAction<void, GameRootState, GameRuntime, UnknownAction>;
 
 interface CompletionMeta {
   scoreId: string;
@@ -125,18 +126,21 @@ const finishGame = (
   }
 };
 
-export const createNewGameState = (highScores: HighScore[] = []): GameState => ({
+export const createNewGameState = (
+  runtime: GameRuntime,
+  highScores: HighScore[] = [],
+): GameState => ({
   schemaVersion: 1,
   currentDay: 0,
   totalDays: 40,
-  currentLocationId: pick(LOCATIONS).id,
+  currentLocationId: pick(LOCATIONS, runtime).id,
   cash: 2_000,
   savings: 0,
   debt: 5_500,
   hitpoint: 100,
   fame: 100,
   maxStorage: 100,
-  market: createMarket(3),
+  market: createMarket(3, runtime),
   inventory: [],
   status: 'playing',
   finalWealth: null,
@@ -153,27 +157,17 @@ export const createNewGameState = (highScores: HighScore[] = []): GameState => (
   lastCafeDay: null,
 });
 
-const initialState = createNewGameState();
+export const initialGameState = createNewGameState(gameRuntime);
 
 const gameSlice = createSlice({
   name: 'game',
-  initialState,
+  initialState: initialGameState,
   reducers: {
-    restartGame: {
-      reducer(state, action: PayloadAction<GameState>) {
-        return { ...action.payload, highScores: state.highScores };
-      },
-      prepare() {
-        return { payload: createNewGameState() };
-      },
+    restartGameResolved(state, action: PayloadAction<GameState>) {
+      return { ...action.payload, highScores: state.highScores };
     },
-    factoryReset: {
-      reducer(_state, action: PayloadAction<GameState>) {
-        return action.payload;
-      },
-      prepare() {
-        return { payload: createNewGameState([]) };
-      },
+    factoryResetResolved(_state, action: PayloadAction<GameState>) {
+      return action.payload;
     },
     buy(state, action: PayloadAction<{ itemId: ItemId; quantity: number }>) {
       const { itemId, quantity } = action.payload;
@@ -410,20 +404,10 @@ const gameSlice = createSlice({
         finishGame(state, action.payload, true);
       }
     },
-    endEarly: {
-      reducer(state, action: PayloadAction<CompletionMeta>) {
-        if (state.status !== 'playing') return;
-        addJournal(state, '俺决定提前离开北京。', 'warning');
-        finishGame(state, action.payload, true);
-      },
-      prepare() {
-        return {
-          payload: {
-            scoreId: crypto.randomUUID(),
-            completedAt: new Date().toISOString(),
-          },
-        };
-      },
+    endEarlyResolved(state, action: PayloadAction<CompletionMeta>) {
+      if (state.status !== 'playing') return;
+      addJournal(state, '俺决定提前离开北京。', 'warning');
+      finishGame(state, action.payload, true);
     },
     clearJournal(state) {
       state.journal = [];
@@ -431,8 +415,26 @@ const gameSlice = createSlice({
   },
 });
 
+export const restartGame = (): GameThunk =>
+  (dispatch, _getState, runtime) => {
+    dispatch(gameSlice.actions.restartGameResolved(createNewGameState(runtime)));
+  };
+
+export const factoryReset = (): GameThunk =>
+  (dispatch, _getState, runtime) => {
+    dispatch(gameSlice.actions.factoryResetResolved(createNewGameState(runtime, [])));
+  };
+
+export const endEarly = (): GameThunk =>
+  (dispatch, _getState, runtime) => {
+    dispatch(gameSlice.actions.endEarlyResolved({
+      scoreId: runtime.createId(),
+      completedAt: runtime.now(),
+    }));
+  };
+
 export const travelTo = (destinationId: LocationId): GameThunk =>
-  (dispatch, getState) => {
+  (dispatch, getState, runtime) => {
     const state = getState().game;
     if (state.status !== 'playing') {
       dispatch(gameSlice.actions.travelRejected('这一局已经结束，请开始新游戏。'));
@@ -452,9 +454,10 @@ export const travelTo = (destinationId: LocationId): GameThunk =>
           destinationId,
           state.currentDay,
           state.totalDays,
+          runtime,
         ),
-        scoreId: crypto.randomUUID(),
-        completedAt: new Date().toISOString(),
+        scoreId: runtime.createId(),
+        completedAt: runtime.now(),
       }),
     );
   };
@@ -463,12 +466,9 @@ export const {
   buy,
   clearJournal,
   deposit,
-  endEarly,
-  factoryReset,
   heal,
   payDebt,
   rentStorage,
-  restartGame,
   sell,
   visitInternetCafe,
   withdraw,
