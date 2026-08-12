@@ -87,7 +87,7 @@ export interface HighScore {
 }
 
 export interface GameState {
-  schemaVersion: 2;
+  schemaVersion: 3;
   totalDays: number;
   remainingTurns: number;
   currentLocationId: LocationId | null;
@@ -107,11 +107,5 @@ export interface GameState {
   journal: JournalEntry[];
   nextJournalId: number;
   highScores: HighScore[];
-  lastCafeDay: number | null;
-}
-
-export interface StoragePlan {
-  capacity: number;
-  price: number;
-  label: string;
+  internetCafeVisits: number;
 }

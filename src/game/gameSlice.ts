@@ -4,7 +4,6 @@ import {
   type ThunkAction,
   type UnknownAction,
 } from "@reduxjs/toolkit";
-import { STORAGE_PLANS } from "./data/events";
 import { ITEM_BY_ID } from "./data/items";
 import { LOCATION_BY_ID } from "./data/locations";
 import { createMarket } from "./random";
@@ -140,7 +139,7 @@ export const createNewGameState = (
   runtime: GameRuntime,
   highScores: HighScore[] = [],
 ): GameState => ({
-  schemaVersion: 2,
+  schemaVersion: 3,
   totalDays: 40,
   remainingTurns: 40,
   currentLocationId: null,
@@ -167,7 +166,7 @@ export const createNewGameState = (
   ],
   nextJournalId: 2,
   highScores,
-  lastCafeDay: null,
+  internetCafeVisits: 0,
 });
 
 export const initialGameState = createNewGameState(gameRuntime);
@@ -185,8 +184,8 @@ const gameSlice = createSlice({
     buy(state, action: PayloadAction<{ itemId: ItemId; quantity: number }>) {
       const { itemId, quantity } = action.payload;
       if (state.status !== "playing") return;
-      if (!Number.isInteger(quantity) || quantity <= 0) {
-        addJournal(state, "买入数量必须是大于零的整数。", "bad");
+      if (!Number.isInteger(quantity) || quantity < 0) {
+        addJournal(state, "买入数量必须是非负整数。", "bad");
         return;
       }
       const quote = state.market.find((item) => item.id === itemId);
@@ -218,8 +217,8 @@ const gameSlice = createSlice({
     sell(state, action: PayloadAction<{ itemId: ItemId; quantity: number }>) {
       const { itemId, quantity } = action.payload;
       if (state.status !== "playing") return;
-      if (!Number.isInteger(quantity) || quantity <= 0) {
-        addJournal(state, "卖出数量必须是大于零的整数。", "bad");
+      if (!Number.isInteger(quantity) || quantity < 0) {
+        addJournal(state, "卖出数量必须是非负整数。", "bad");
         return;
       }
       const quote = state.market.find((item) => item.id === itemId);
@@ -238,6 +237,8 @@ const gameSlice = createSlice({
       if (owned.quantity === 0) {
         state.inventory = state.inventory.filter((item) => item.id !== itemId);
       }
+      if (itemId === 7) state.fame = Math.max(0, state.fame - 7);
+      if (itemId === 5) state.fame = Math.max(0, state.fame - 10);
       addJournal(
         state,
         `卖掉 ${quantity} 件${quote.name}，收回 ${revenue.toLocaleString("zh-CN")} 元。`,
@@ -247,7 +248,7 @@ const gameSlice = createSlice({
     deposit(state, action: PayloadAction<number>) {
       const amount = action.payload;
       if (state.status !== "playing") return;
-      if (!Number.isInteger(amount) || amount <= 0 || amount > state.cash) {
+      if (!Number.isInteger(amount) || amount < 0 || amount > state.cash) {
         addJournal(state, "银行职员说：存款数目不对，或者现金不够。", "bad");
         return;
       }
@@ -262,7 +263,7 @@ const gameSlice = createSlice({
     withdraw(state, action: PayloadAction<number>) {
       const amount = action.payload;
       if (state.status !== "playing") return;
-      if (!Number.isInteger(amount) || amount <= 0 || amount > state.savings) {
+      if (!Number.isInteger(amount) || amount < 0 || amount > state.savings) {
         addJournal(state, "银行职员说：取款数目不对，或者存款不够。", "bad");
         return;
       }
@@ -279,7 +280,7 @@ const gameSlice = createSlice({
       if (state.status !== "playing") return;
       if (
         !Number.isInteger(amount) ||
-        amount <= 0 ||
+        amount < 0 ||
         amount > state.cash ||
         amount > state.debt
       ) {
@@ -296,7 +297,7 @@ const gameSlice = createSlice({
     },
     heal(state, action: PayloadAction<number>) {
       const points = action.payload;
-      const cost = points * 2_500;
+      const cost = points * 3_500;
       if (state.status !== "playing") return;
       if (
         !Number.isInteger(points) ||
@@ -319,36 +320,27 @@ const gameSlice = createSlice({
         "good",
       );
     },
-    rentStorage(state, action: PayloadAction<number>) {
-      const capacity = action.payload;
-      const plan = STORAGE_PLANS.find((entry) => entry.capacity === capacity);
+    rentStorage(state) {
       if (state.status !== "playing") return;
-      if (!plan || plan.capacity <= state.maxStorage) {
-        addJournal(state, "中介说：这套房不比你现在的出租屋大。", "bad");
+      if (state.maxStorage >= 140) {
+        addJournal(state, "中介说：容量已经到顶了。", "bad");
         return;
       }
-      if (plan.price > state.cash) {
-        addJournal(state, "中介掐指一算：你带的钱还不够。", "bad");
+      if (state.cash < 30_000) {
+        addJournal(state, "中介说：现金不够三万元。", "bad");
         return;
       }
-      state.cash -= plan.price;
-      state.maxStorage = plan.capacity;
-      addJournal(
-        state,
-        `租下${plan.label}，出租屋容量扩大到 ${plan.capacity} 件。`,
-        "good",
-      );
+      state.cash = state.cash <= 30_000 ? state.cash - 25_000 : Math.trunc(state.cash / 2) - 2_000;
+      state.maxStorage += 10;
+      addJournal(state, `出租屋容量扩大到 ${state.maxStorage} 件。`, "good");
     },
-    visitInternetCafe(state) {
-      if (state.status !== "playing") return;
-      const currentDay = state.totalDays - state.remainingTurns;
-      if (state.lastCafeDay === currentDay) {
-        addJournal(state, "网吧老板说：今天的广告你已经点过了。", "warning");
-        return;
-      }
-      state.lastCafeDay = currentDay;
-      state.cash += 3;
-      addJournal(state, "俺去网吧免费上了一会儿网，还赚了3元广告费。", "good");
+    cafeReward(state, action: PayloadAction<number>) {
+      if (state.status !== "playing" || state.internetCafeVisits >= 3 || state.cash < 15) return;
+      const reward = action.payload;
+      if (!Number.isInteger(reward) || reward < 1 || reward > 10) return;
+      state.cash += reward;
+      state.internetCafeVisits += 1;
+      addJournal(state, `俺去网吧免费上了一会儿网，还赚了${reward}元广告费。`, "good");
     },
     travelRejected(state, action: PayloadAction<string>) {
       addJournal(state, action.payload, "bad");
@@ -452,15 +444,23 @@ export const travelTo =
 
 export const {
   buy,
+  cafeReward,
   clearJournal,
   deposit,
   heal,
   payDebt,
   rentStorage,
   sell,
-  visitInternetCafe,
   withdraw,
 } = gameSlice.actions;
+
+export const visitInternetCafe = (): GameThunk => (dispatch, getState, runtime) => {
+  const state = getState().game;
+  if (state.status !== "playing" || state.internetCafeVisits >= 3 || state.cash < 15) {
+    return;
+  }
+  dispatch(cafeReward(1 + runtime.nextInt(10)));
+};
 
 export default gameSlice.reducer;
 

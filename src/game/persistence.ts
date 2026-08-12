@@ -8,8 +8,9 @@ import type {
   MarketQuote,
 } from './types';
 
-// v1 is deliberately preserved untouched for Plan007 migration; this interim schema uses v2.
-const STORAGE_KEY = 'beijing-hell:save:v2';
+// v1 and v2 are deliberately preserved untouched for Plan007 migration; this interim schema uses v3.
+// Do not read or write either older key until that migration is implemented.
+export const STORAGE_KEY = 'beijing-hell:save:v3';
 const ITEM_IDS = new Set<number>(ITEMS.map((item) => item.id));
 const LOCATION_IDS = new Set<number>(LOCATIONS.map((location) => location.id));
 const JOURNAL_TONES = new Set(['info', 'good', 'bad', 'warning']);
@@ -65,10 +66,10 @@ function hasUniqueIds(values: readonly { id: number }[]): boolean {
   return new Set(values.map((value) => value.id)).size === values.length;
 }
 
-function isGameState(value: unknown): value is GameState {
+function isGameState3(value: unknown): value is GameState {
   if (!isRecord(value)) return false;
   if (
-    value.schemaVersion !== 2 ||
+    value.schemaVersion !== 3 ||
     value.totalDays !== 40 ||
     !isIntegerInRange(value.remainingTurns, 0, 40) ||
     !(value.currentLocationId === null || (isIntegerInRange(value.currentLocationId, 1, 19) && LOCATION_IDS.has(value.currentLocationId))) ||
@@ -85,10 +86,7 @@ function isGameState(value: unknown): value is GameState {
     !GAME_STATUSES.has(value.status) ||
     !(value.finalWealth === null || isFiniteNumber(value.finalWealth)) ||
     !isIntegerInRange(value.nextJournalId, 1, Number.MAX_SAFE_INTEGER) ||
-    !(
-      value.lastCafeDay === null ||
-      isIntegerInRange(value.lastCafeDay, 0, 40)
-    ) ||
+    !isIntegerInRange(value.internetCafeVisits, 0, 3) ||
     !Array.isArray(value.market) ||
     !Array.isArray(value.inventory) ||
     !Array.isArray(value.journal) ||
@@ -121,13 +119,24 @@ function isGameState(value: unknown): value is GameState {
   return usedStorage <= value.maxStorage && value.nextJournalId > largestJournalId;
 }
 
+export function parseGameState(raw: string): GameState | null {
+  try {
+    const value: unknown = JSON.parse(raw);
+    return isGameState3(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+export function serializeGameState(state: GameState): string {
+  return JSON.stringify(state);
+}
+
 export function loadGameState(): GameState | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const value: unknown = JSON.parse(raw);
-    return isGameState(value) ? value : null;
+    return raw ? parseGameState(raw) : null;
   } catch {
     return null;
   }
@@ -136,7 +145,7 @@ export function loadGameState(): GameState | null {
 export function saveGameState(state: GameState): void {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(STORAGE_KEY, serializeGameState(state));
   } catch {
     // 存储空间不可用时，游戏仍可在当前页面继续。
   }

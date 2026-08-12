@@ -201,7 +201,7 @@ describe("travel thunk guards and metadata", () => {
     const store = configureStore({ reducer: { game: reducer }, middleware: g => g({ thunk: { extraArgument: { ...throwingMeta(), nextInt: tape.nextInt } } }) }); store.dispatch({ type: "game/restartGameResolved", payload: state }); store.dispatch(travelTo(1)); expect(store.getState().game.remainingTurns).toBe(39); tape.assertConsumed();
   });
   it("final completion calls metadata and auto-liquidates", () => {
-    const setup = createRandomTape(marketEntries()); const state = fresh(setup, { debt: 0, remainingTurns: 1, inventory: [{ id: 1, name: "手机", averagePrice: 1, quantity: 2 }] }); setup.assertConsumed(); const tape = turnTape(1); let now = 0, ids = 0;
+    const setup = createRandomTape(marketEntries()); const state = fresh(setup, { debt: 0, fame: 37, remainingTurns: 1, inventory: [{ id: 1, name: "手机", averagePrice: 1, quantity: 2 }] }); setup.assertConsumed(); const tape = turnTape(1); let now = 0, ids = 0;
     const store = configureStore({ reducer: { game: reducer }, middleware: g => g({ thunk: { extraArgument: { nextInt: tape.nextInt, now: () => { now++; return "now"; }, createId: () => { ids++; return "id"; } } } }) });
     store.dispatch({ type: "game/restartGameResolved", payload: state });
     store.dispatch(travelTo(1));
@@ -209,6 +209,7 @@ describe("travel thunk guards and metadata", () => {
     expect(result).toMatchObject({ status: "won", endReason: "completed", remainingTurns: 0 });
     expect(result.inventory).toEqual([]);
     expect(result.cash).toBeGreaterThan(2000);
+    expect(result.fame).toBe(37);
     expect(result.journal.filter((entry) => entry.day === 40).length).toBeGreaterThanOrEqual(2);
     expect({ now, ids }).toEqual({ now: 1, ids: 1 });
     tape.assertConsumed();

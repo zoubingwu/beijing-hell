@@ -42,6 +42,6 @@ pnpm preview
 5. 通过租房中介扩大初始 100 件的储物容量。
 6. 扛过市场、现金与健康随机事件，在第 40 天按“现金 + 存款 - 债务”结算。
 
-游戏会自动保存到浏览器 localStorage。当前使用 schema 2 的临时存档键 `beijing-hell:save:v2`；旧版 `beijing-hell:save:v1` 会被刻意保留且不读取、不覆盖，待 Plan007 专门迁移。完成一局且最终资产为正即可进入本机 Top 10。
+游戏会自动保存到浏览器 localStorage。当前使用 schema 3 的临时存档键 `beijing-hell:save:v3`；旧版 `beijing-hell:save:v1` 与 Plan003 的 `beijing-hell:save:v2` 会被刻意保留且不读取、不覆盖，待 Plan007 专门迁移。完成一局且最终资产为正即可进入本机 Top 10。
 
 游戏规则和文案以仓库 `master` 分支的 core / bearyhubot 实现及原版文档为基础；迁移时修复了非法数量交易、最后一站不可达、重复售罄、终局货物无法结算等历史问题。

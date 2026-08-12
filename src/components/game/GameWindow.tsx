@@ -21,7 +21,7 @@ import {
   visitInternetCafe,
   withdraw,
 } from '../../game/gameSlice';
-import { NEWS_HEADLINES, STORAGE_PLANS } from '../../game/data/events';
+import { NEWS_HEADLINES } from '../../game/data/events';
 import { ITEM_BY_ID } from '../../game/data/items';
 import { LOCATIONS } from '../../game/data/locations';
 import { formatMoney } from '../../game/format';
@@ -63,6 +63,7 @@ interface NumberDialogProps {
   label: string;
   initialValue: number;
   confirmText: string;
+  min?: number;
   onConfirm: (value: number) => void;
   onClose: () => void;
 }
@@ -73,6 +74,7 @@ function NumberDialog({
   label,
   initialValue,
   confirmText,
+  min = 0,
   onConfirm,
   onClose,
 }: NumberDialogProps) {
@@ -93,7 +95,7 @@ function NumberDialog({
           <input
             className="win98Input"
             type="number"
-            min="1"
+            min={min}
             step="1"
             value={value}
             onChange={(event) => setValue(event.target.value)}
@@ -123,9 +125,9 @@ const HELP_TEXT = [
   '一、在当前地点的黑市里低价买进物品。',
   '二、点击另一个地铁站移动；每次移动消耗一天。',
   '三、观察新地点的价格，把涨价的货物卖掉。',
-  '四、现金会遭遇随机损失，存进银行更安全。',
+  '四、现金和存款都会遇到随机事件；现金损失可存银行规避，存款按日增加1%利息。',
   '五、欠村长的钱每天增加10%利息，超过十万会挨打。',
-  '六、健康归零会立即失败；医院每恢复1点收费2500元。',
+  '六、健康值降到0以下会死亡并强制住院；医院每恢复1点收费3500元。',
   '七、出租屋初始只能放100件货，可找中介换大房子。',
   '八、你只能在北京待40天，最后按现金+存款-债务结算。',
 ] as const;
@@ -305,7 +307,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
               id="trade-quantity"
               className="win98Input"
               type="number"
-              min="1"
+              min="0"
               step="1"
               value={quantity}
               onChange={(event) => setQuantity(event.target.value)}
@@ -488,14 +490,14 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
                 label="存款金额"
                 initial={game.cash}
                 button="存入"
-                disabled={!canPlay || game.cash <= 0}
+                disabled={!canPlay}
                 onAction={(value) => dispatch(deposit(value))}
               />
               <NumberAction
                 label="取款金额"
                 initial={game.savings}
                 button="取出"
-                disabled={!canPlay || game.savings <= 0}
+                disabled={!canPlay}
                 onAction={(value) => dispatch(withdraw(value))}
               />
             </div>
@@ -507,9 +509,10 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
       {dialog === 'hospital' ? (
         <NumberDialog
           title="北京医院"
-          description={`你目前有 ${game.hitpoint}/100 点健康。每恢复1点收费2,500元。`}
+          description={`你目前有 ${game.hitpoint}/100 点健康。每恢复1点收费3,500元。`}
           label="恢复点数"
-          initialValue={Math.min(100 - game.hitpoint, Math.floor(game.cash / 2_500))}
+          initialValue={Math.min(100 - game.hitpoint, Math.floor(game.cash / 3_500))}
+          min={1}
           confirmText="接受治疗"
           onConfirm={(value) => dispatch(heal(value))}
           onClose={() => setDialog(null)}
@@ -533,22 +536,19 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
           <div className="rentDialog">
             <p>当前出租屋容量：<b>{game.maxStorage}</b> 件。换更大的房子可以扩大生意。</p>
             <div className="rentPlans">
-              {STORAGE_PLANS.map((plan) => (
-                <button
-                  className="win98Button rentPlan"
-                  type="button"
-                  key={plan.capacity}
-                  disabled={!canPlay || plan.capacity <= game.maxStorage || plan.price > game.cash}
-                  onClick={() => {
-                    dispatch(rentStorage(plan.capacity));
-                    setDialog(null);
-                  }}
-                >
-                  <b>{plan.label}</b>
-                  <span>容量：{plan.capacity} 件</span>
-                  <span>租金：{formatMoney(plan.price)} 元</span>
-                </button>
-              ))}
+              <button
+                className="win98Button rentPlan"
+                type="button"
+                disabled={!canPlay || game.maxStorage >= 140 || game.cash < 30_000}
+                onClick={() => {
+                  dispatch(rentStorage());
+                  setDialog(null);
+                }}
+              >
+                <b>中介报价不透明</b>
+                <span>容量增加10件（最多140件）</span>
+                <span>现金至少需要30,000元</span>
+              </button>
             </div>
             <div className="dialogButtons"><button className="win98Button" type="button" onClick={() => setDialog(null)}>算了</button></div>
           </div>
@@ -651,14 +651,14 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
               {game.status === 'won'
                 ? '恭喜！你活着离开了北京。'
                 : game.hitpoint <= 0
-                  ? '健康值归零，本局提前结束。'
+                  ? '健康值低于零，本局提前结束。'
                   : '胜败乃兵家常事，英雄请重新来过。'}
             </h3>
             {game.status === 'lost' && game.hitpoint <= 0 ? (
               <p>
                 {game.debt > 100_000
                   ? '欠款超过十万元后，村长每天都会叫人来讨债并扣除30点健康。记得及时还款或去医院治疗。'
-                  : '你在随机事件中耗尽了健康值。记得留意日记中的健康警告，及时去医院治疗。'}
+                  : '你在随机事件中耗尽了健康值。健康值低于零会强制住院，记得及时去医院治疗。'}
               </p>
             ) : null}
             <p>最终财富：<b>{formatMoney(game.finalWealth ?? totalWealth)} 元</b></p>
@@ -674,6 +674,7 @@ interface NumberActionProps {
   label: string;
   initial: number;
   button: string;
+  min?: number;
   disabled: boolean;
   onAction: (value: number) => void;
 }
@@ -682,6 +683,7 @@ function NumberAction({
   label,
   initial,
   button,
+  min = 0,
   disabled,
   onAction,
 }: NumberActionProps) {
@@ -694,7 +696,7 @@ function NumberAction({
         onAction(Number(value));
       }}
     >
-      <label>{label}<input className="win98Input" type="number" min="1" step="1" value={value} onChange={(event) => setValue(event.target.value)} /></label>
+      <label>{label}<input className="win98Input" type="number" min={min} step="1" value={value} onChange={(event) => setValue(event.target.value)} /></label>
       <button className="win98Button" type="submit" disabled={disabled}>{button}</button>
     </form>
   );

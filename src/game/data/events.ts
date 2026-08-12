@@ -2,7 +2,6 @@ import type {
   CashEvent,
   HealthEvent,
   MarketEventDefinition,
-  StoragePlan,
 } from "../types";
 
 export const MARKET_EVENT_DEFINITIONS: readonly MarketEventDefinition[] = [
@@ -159,13 +158,6 @@ export const HEALTH_EVENTS: readonly HealthEvent[] = [
   { description: "守自行车的王大婶嘲笑俺没北京户口!", loss: 1, frequency: 45 },
   { description: "北京高温40度!俺热...", loss: 1, frequency: 48 },
   { description: "申奥添了新风景，北京又来沙尘暴!", loss: 1, frequency: 33 },
-] as const;
-
-export const STORAGE_PLANS: readonly StoragePlan[] = [
-  { capacity: 200, price: 20_000, label: "普通一居室" },
-  { capacity: 350, price: 60_000, label: "宽敞两居室" },
-  { capacity: 600, price: 160_000, label: "豪华三居室" },
-  { capacity: 1000, price: 420_000, label: "仓库级地下室" },
 ] as const;
 
 export const NEWS_HEADLINES = [

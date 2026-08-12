@@ -36,11 +36,11 @@
 | 12 健康事件 | 已接入 Plan003 | `SelectionDlg.cpp:1407-1635` | 顺序扫描、首个命中停止（`src/game/engine.test.ts`） |
 | 7 金钱事件 | 已接入 Plan003 | `SelectionDlg.cpp:1781-1845` | 现金/存款整数公式与黑客门值（`src/game/engine.test.ts`） |
 | 每日顺序 | 已实施（Plan 003） | `SelectionDlg.cpp:527-530` | 市场→利息→商业→健康→金钱→挨打→扣回合；住院/死亡边界已锁定 |
-| 设施 | 待实施 | `SelectionDlg.cpp` | 待后续计划填写 |
+| 设施 | 已实施（Plan 004） | `SelectionDlg.cpp:882-932,1661-1686,1982-2008,2063-2097` | 手动卖货名声、医院3500/点、租房+10/上限140及网吧三次奖励边界已接入；交易与设施边界见 Plan 004 测试 |
 | 地点 | 待实施 | `SelectionDlg.cpp` | 待后续计划填写 |
 | 结算 | 待实施 | `SelectionDlg.cpp` | 待后续计划填写 |
 | 排行榜 | 待实施 | `TopPlayerDlg.cpp:14-26,80-113,142-313` | 待后续计划填写 |
-| 持久化 | 临时 schema 2 | `beijing-hell:save:v2`；旧 `beijing-hell:save:v1` 刻意保留、不读取不覆盖，待 Plan007 迁移 | Plan007 负责迁移与测试 |
+| 持久化 | 临时 schema 3 | `beijing-hell:save:v3`；旧 `beijing-hell:save:v1` 与 Plan003 的 `beijing-hell:save:v2` 刻意保留、不读取不覆盖，待 Plan007 迁移 | Plan007 负责迁移与测试 |
 
 > **已批准偏差（Plan 002）**：原版 `DoRandomStuff` 的 `exist` 标志未在每个赠品事件开始时重置，后续赠品可能沿用旧值并触发列表索引未定义行为。Web 解析器按每个赠品重新检查库存，不复刻该不稳定的列表越界行为。
 
