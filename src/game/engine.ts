@@ -7,6 +7,11 @@ import {
 } from './eventResolver';
 import type { GameRuntime } from './runtime';
 import type { GameState, LocationSlot, JournalTone } from './types';
+import {
+  saturatingAdd,
+  saturatingSignedAdd,
+  saturatingSignedSubtract,
+} from './numbers';
 
 export interface TurnLogDraft {
   text: string;
@@ -32,8 +37,13 @@ export function resolveTravel(
   state.currentLocationSlot = destinationSlot;
   const leaveout = state.remainingTurns <= 2 ? 0 : 3;
   state.market = createMarket(leaveout, runtime);
-  if (state.debt > 0) state.debt += Math.floor(state.debt * 0.1);
-  state.savings += Math.floor(state.savings * 0.01);
+  if (state.debt > 0) {
+    state.debt = saturatingAdd(state.debt, Math.floor(state.debt / 10));
+  }
+  state.savings = saturatingAdd(
+    state.savings,
+    Math.floor(state.savings / 100),
+  );
 
   const prices = Object.fromEntries(
     state.market.map((q) => [q.id, q.marketPrice]),
@@ -55,15 +65,15 @@ export function resolveTravel(
 
   const healthEvent = resolveHealthEvent(runtime);
   if (healthEvent) {
-    state.hitpoint -= healthEvent.loss;
+    state.hitpoint = saturatingSignedSubtract(state.hitpoint, healthEvent.loss);
     logs.push({ text: healthEvent.description, tone: 'bad' });
   }
   if (state.hitpoint < 85 && state.remainingTurns > 3) {
     const delay = 1 + runtime.nextInt(2);
     runtime.nextInt(29);
     const loan = delay * (1000 + runtime.nextInt(8500));
-    state.debt += loan;
-    state.hitpoint = Math.min(100, state.hitpoint + 10);
+    state.debt = saturatingAdd(state.debt, loan);
+    state.hitpoint = Math.min(100, saturatingSignedAdd(state.hitpoint, 10));
     state.remainingTurns -= delay;
     logs.push({
       text: `俺被送进医院，欠款增加 ${loan} 元，住院 ${delay} 天，健康恢复到 ${state.hitpoint}。`,
@@ -107,7 +117,7 @@ export function resolveTravel(
     logs.push({ text: event.description, tone });
   }
   if (state.debt > 100000) {
-    state.hitpoint -= 30;
+    state.hitpoint = saturatingSignedSubtract(state.hitpoint, 30);
     logs.push({
       text: '俺欠钱太多，村长叫一群老乡揍了俺一顿！（损失30点健康）',
       tone: 'bad',

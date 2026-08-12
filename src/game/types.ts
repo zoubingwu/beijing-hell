@@ -83,7 +83,7 @@ export interface PendingScore {
 }
 
 export interface GameState {
-  schemaVersion: 5;
+  schemaVersion: 6;
   pendingScore: PendingScore | null;
   totalDays: number;
   remainingTurns: number;

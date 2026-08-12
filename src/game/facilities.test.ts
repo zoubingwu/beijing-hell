@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createGameStore } from '../app/store';
 import { createNewGameState, heal, rentStorage, restartGame, visitInternetCafe } from './gameSlice';
 import type { GameRuntime } from './runtime';
+import { DOMAIN_MAX } from './numbers';
 import type { GameState } from './types';
 
 const runtime = (random: number, onRandom?: () => void, expectedMax?: number): GameRuntime => ({
@@ -21,6 +22,12 @@ describe('设施 reducers and thunk guards', () => {
     const store = storeFactory({ cash: 20_000, hitpoint: -1 });
     store.dispatch(heal(3));
     expect(store.getState().game).toMatchObject({ cash: 9_500, hitpoint: 2 });
+  });
+  it('rejects unsafe integer hospital points', () => {
+    const store = storeFactory({ cash: DOMAIN_MAX, hitpoint: -DOMAIN_MAX });
+    const before = numeric(store.getState().game);
+    store.dispatch(heal(DOMAIN_MAX + 1));
+    expect(numeric(store.getState().game)).toEqual(before);
   });
   it('rejects hospital treatment with one yuan short, at full health, or negative points', () => {
     for (const patch of [{ cash: 10_499, hitpoint: 0 }, { cash: 20_000, hitpoint: 100 }, { cash: 20_000, hitpoint: 50 }]) {

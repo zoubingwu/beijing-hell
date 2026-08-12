@@ -1,103 +1,200 @@
-import { ITEMS } from './data/items';
-import { LOCATIONS } from './data/locations';
+import { DEFAULT_HIGH_SCORES } from "./data/highScores";
+import { ITEM_BY_ID, ITEMS } from "./data/items";
+import { LOCATIONS } from "./data/locations";
+import {
+  isDomainInteger,
+  saturatingAdd,
+  saturatingWealth,
+} from "./numbers";
+import { fameLabel, qualifyScore } from "./scoring";
 import type {
   GameState,
   HighScore,
   InventoryEntry,
   JournalEntry,
   MarketQuote,
-} from './types';
+  PendingScore,
+} from "./types";
 
-// Preserve v1-v4 keys for future migrations; Plan006 writes schema 5.
-export const STORAGE_KEY = 'beijing-hell:save:v5';
-export const legacyKeys = ['beijing-hell:save:v1', 'beijing-hell:save:v2', 'beijing-hell:save:v3', 'beijing-hell:save:v4'] as const;
-const ITEM_IDS = new Set<number>(ITEMS.map((item) => item.id));
-const LOCATION_IDS = new Set<number>(LOCATIONS.map((location) => location.slot));
-const JOURNAL_TONES = new Set(['info', 'good', 'bad', 'warning']);
-const GAME_STATUSES = new Set(['playing', 'won', 'lost']);
-const FAME_LABELS = new Set(['德高望重', '杰出青年', '一般般', '不佳', '争议人物', '差', '很差', '江湖唾弃']);
+export const STORAGE_KEY = "beijing-hell:save:v6";
+export const legacyKeys = [
+  "beijing-hell:save:v1",
+  "beijing-hell:save:v2",
+  "beijing-hell:save:v3",
+  "beijing-hell:save:v4",
+  "beijing-hell:save:v5",
+] as const;
+
+const ITEM_IDS = new Set(ITEMS.map((item) => item.id));
+const LOCATION_IDS = new Set(LOCATIONS.map((location) => location.slot));
+const JOURNAL_TONES = new Set(["info", "good", "bad", "warning"]);
+const FAME_LABELS = new Set([
+  "德高望重",
+  "杰出青年",
+  "一般般",
+  "不佳",
+  "争议人物",
+  "差",
+  "很差",
+  "江湖唾弃",
+]);
+const STORAGE_CAPACITIES = new Set([100, 110, 120, 130, 140]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
+  typeof value === "object" && value !== null;
 
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value);
+const isSafeInteger = (value: unknown): value is number =>
+  isDomainInteger(value);
 
-const isIntegerInRange = (
-  value: unknown,
-  minimum: number,
-  maximum: number,
-): value is number =>
-  Number.isInteger(value) && Number(value) >= minimum && Number(value) <= maximum;
+const isParsedDate = (value: unknown): value is string =>
+  typeof value === "string" && Number.isFinite(Date.parse(value));
+
+const hasUniqueIds = (
+  values: readonly { id: number | string }[],
+): boolean => new Set(values.map((value) => value.id)).size === values.length;
+
+const hasCanonicalItem = (value: Record<string, unknown>): boolean => {
+  if (!isSafeInteger(value.id) || !ITEM_IDS.has(value.id as never)) return false;
+  return value.name === ITEM_BY_ID.get(value.id as never)?.name;
+};
 
 const isMarketQuote = (value: unknown): value is MarketQuote =>
   isRecord(value) &&
-  isIntegerInRange(value.id, 1, 8) &&
-  ITEM_IDS.has(value.id) &&
-  typeof value.name === 'string' &&
-  isIntegerInRange(value.marketPrice, 0, Number.MAX_SAFE_INTEGER);
+  hasCanonicalItem(value) &&
+  isSafeInteger(value.marketPrice) &&
+  value.marketPrice >= 0;
 
 const isInventoryEntry = (value: unknown): value is InventoryEntry =>
   isRecord(value) &&
-  isIntegerInRange(value.id, 1, 8) &&
-  ITEM_IDS.has(value.id) &&
-  typeof value.name === 'string' &&
-  isIntegerInRange(value.averagePrice, 0, Number.MAX_SAFE_INTEGER) &&
-  isIntegerInRange(value.quantity, 1, Number.MAX_SAFE_INTEGER);
+  hasCanonicalItem(value) &&
+  isSafeInteger(value.averagePrice) &&
+  value.averagePrice >= 0 &&
+  isSafeInteger(value.quantity) &&
+  value.quantity > 0;
 
 const isJournalEntry = (value: unknown): value is JournalEntry =>
   isRecord(value) &&
-  isIntegerInRange(value.id, 1, Number.MAX_SAFE_INTEGER) &&
-  isIntegerInRange(value.day, 1, 40) &&
-  typeof value.text === 'string' &&
+  isSafeInteger(value.id) &&
+  value.id > 0 &&
+  isSafeInteger(value.day) &&
+  value.day >= 1 &&
+  value.day <= 40 &&
+  typeof value.text === "string" &&
   value.text.length > 0 &&
-  typeof value.tone === 'string' &&
+  typeof value.tone === "string" &&
   JOURNAL_TONES.has(value.tone);
+
+const hasValidHealth = (value: unknown): value is number =>
+  isSafeInteger(value) && value <= 100;
 
 const isHighScore = (value: unknown): value is HighScore =>
   isRecord(value) &&
-  typeof value.id === 'string' && value.id.length > 0 &&
-  typeof value.name === 'string' &&
-  isFiniteNumber(value.wealth) && value.wealth > 0 &&
-  isFiniteNumber(value.health) &&
-  typeof value.fameLabel === 'string' && FAME_LABELS.has(value.fameLabel) &&
-  (value.completedAt === undefined || (typeof value.completedAt === 'string' && Number.isFinite(Date.parse(value.completedAt))));
+  typeof value.id === "string" &&
+  value.id.length > 0 &&
+  typeof value.name === "string" &&
+  isSafeInteger(value.wealth) &&
+  value.wealth > 0 &&
+  hasValidHealth(value.health) &&
+  typeof value.fameLabel === "string" &&
+  FAME_LABELS.has(value.fameLabel) &&
+  (value.completedAt === undefined || isParsedDate(value.completedAt));
 
-function hasUniqueIds(values: readonly { id: number }[]): boolean {
-  return new Set(values.map((value) => value.id)).size === values.length;
+const isPendingScore = (value: unknown): value is PendingScore =>
+  isRecord(value) &&
+  typeof value.id === "string" &&
+  value.id.length > 0 &&
+  isSafeInteger(value.wealth) &&
+  value.wealth > 0 &&
+  hasValidHealth(value.health) &&
+  isSafeInteger(value.fame) &&
+  value.fame >= 0 &&
+  value.fame <= 100 &&
+  typeof value.fameLabel === "string" &&
+  FAME_LABELS.has(value.fameLabel) &&
+  isParsedDate(value.completedAt);
+
+export function isValidHighScores(value: unknown): value is HighScore[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= 10 &&
+    value.every(isHighScore) &&
+    hasUniqueIds(value) &&
+    value.every(
+      (score, index) => index === 0 || value[index - 1].wealth >= score.wealth,
+    )
+  );
 }
 
-function isGameState5(value: unknown): value is GameState {
-  if (!isRecord(value)) return false;
+function isValidActiveGameCore(value: unknown): value is GameState {
+  if (!isRecord(value) || value.schemaVersion !== 6 || value.totalDays !== 40) {
+    return false;
+  }
   if (
-    value.schemaVersion !== 5 ||
-    value.totalDays !== 40 ||
-    !isIntegerInRange(value.remainingTurns, 0, 40) ||
-    !(value.currentLocationSlot === null || (isIntegerInRange(value.currentLocationSlot, 1, 10) && LOCATION_IDS.has(value.currentLocationSlot))) ||
-    !(value.locationMode === 'subway' || value.locationMode === 'surface') ||
-    !isIntegerInRange(value.cash, 0, Number.MAX_SAFE_INTEGER) ||
-    !isIntegerInRange(value.savings, 0, Number.MAX_SAFE_INTEGER) ||
-    !isIntegerInRange(value.debt, 0, Number.MAX_SAFE_INTEGER) ||
-    !isFiniteNumber(value.hitpoint) ||
-    typeof value.hackerEnabled !== 'boolean' ||
-    typeof value.deathObserved !== 'boolean' ||
-    !(value.endReason === null || value.endReason === 'completed' || value.endReason === 'died' || value.endReason === 'manual') ||
-    !isIntegerInRange(value.fame, 0, 100) ||
-    !isIntegerInRange(value.maxStorage, 100, Number.MAX_SAFE_INTEGER) ||
-    typeof value.status !== 'string' ||
-    !GAME_STATUSES.has(value.status) ||
-    !(value.finalWealth === null || isFiniteNumber(value.finalWealth)) ||
-    !isIntegerInRange(value.nextJournalId, 1, Number.MAX_SAFE_INTEGER) ||
-    !isIntegerInRange(value.internetCafeVisits, 0, 3) ||
+    !isSafeInteger(value.remainingTurns) ||
+    value.remainingTurns < 0 ||
+    value.remainingTurns > 40
+  ) {
+    return false;
+  }
+  if (
+    !(
+      value.currentLocationSlot === null ||
+      (isSafeInteger(value.currentLocationSlot) &&
+        LOCATION_IDS.has(value.currentLocationSlot as never))
+    )
+  ) {
+    return false;
+  }
+  if (value.locationMode !== "subway" && value.locationMode !== "surface") {
+    return false;
+  }
+  if (
+    ![value.cash, value.savings, value.debt].every(
+      (balance) => isSafeInteger(balance) && balance >= 0,
+    ) ||
+    !hasValidHealth(value.hitpoint) ||
+    !isSafeInteger(value.fame) ||
+    value.fame < 0 ||
+    value.fame > 100 ||
+    !isSafeInteger(value.maxStorage) ||
+    !STORAGE_CAPACITIES.has(value.maxStorage)
+  ) {
+    return false;
+  }
+  if (
+    typeof value.hackerEnabled !== "boolean" ||
+    typeof value.deathObserved !== "boolean" ||
+    (value.deathObserved && value.hitpoint >= 0) ||
+    !(
+      value.endReason === null ||
+      value.endReason === "completed" ||
+      value.endReason === "died" ||
+      value.endReason === "manual"
+    ) ||
+    !(
+      value.status === "playing" ||
+      value.status === "won" ||
+      value.status === "lost"
+    ) ||
+    !(value.finalWealth === null || isSafeInteger(value.finalWealth))
+  ) {
+    return false;
+  }
+  if (
+    !isSafeInteger(value.nextJournalId) ||
+    value.nextJournalId <= 0 ||
+    !isSafeInteger(value.internetCafeVisits) ||
+    value.internetCafeVisits < 0 ||
+    value.internetCafeVisits > 3 ||
     !Array.isArray(value.market) ||
     !Array.isArray(value.inventory) ||
     !Array.isArray(value.journal) ||
     !Array.isArray(value.highScores) ||
-    !(value.pendingScore === null || (isRecord(value.pendingScore) && typeof value.pendingScore.id === 'string' && value.pendingScore.id.length > 0 && isFiniteNumber(value.pendingScore.wealth) && value.pendingScore.wealth > 0 && isFiniteNumber(value.pendingScore.health) && isFiniteNumber(value.pendingScore.fame) && value.pendingScore.fame >= 0 && value.pendingScore.fame <= 100 && typeof value.pendingScore.fameLabel === 'string' && FAME_LABELS.has(value.pendingScore.fameLabel) && typeof value.pendingScore.completedAt === 'string' && Number.isFinite(Date.parse(value.pendingScore.completedAt))))
+    !isValidHighScores(value.highScores) ||
+    !(value.pendingScore === null || isPendingScore(value.pendingScore))
   ) {
     return false;
   }
-
   if (
     value.market.length !== ITEMS.length ||
     !value.market.every(isMarketQuote) ||
@@ -105,58 +202,204 @@ function isGameState5(value: unknown): value is GameState {
     !value.inventory.every(isInventoryEntry) ||
     !hasUniqueIds(value.inventory) ||
     !value.journal.every(isJournalEntry) ||
-    value.highScores.length > 10 ||
-    !value.highScores.every(isHighScore) ||
-    new Set((value.highScores as HighScore[]).map((score) => score.id)).size !== value.highScores.length ||
-    (value.highScores as HighScore[]).some((score, index, scores) => index > 0 && scores[index - 1].wealth < score.wealth)
+    !hasUniqueIds(value.journal)
   ) {
     return false;
   }
 
   const usedStorage = value.inventory.reduce(
-    (total: number, item: InventoryEntry) => total + item.quantity,
+    (total, entry) => saturatingAdd(total, entry.quantity),
     0,
   );
   const largestJournalId = value.journal.reduce(
-    (largest: number, entry: JournalEntry) => Math.max(largest, entry.id),
+    (largest, entry) => Math.max(largest, entry.id),
     0,
   );
-  return usedStorage <= value.maxStorage && value.nextJournalId > largestJournalId;
+  if (
+    usedStorage > value.maxStorage ||
+    value.nextJournalId <= largestJournalId
+  ) {
+    return false;
+  }
+
+  if (value.status === "playing") {
+    return (
+      value.remainingTurns > 0 &&
+      value.endReason === null &&
+      value.finalWealth === null &&
+      value.pendingScore === null &&
+      !value.deathObserved
+    );
+  }
+
+  if (
+    value.endReason === null ||
+    value.finalWealth === null ||
+    value.finalWealth !==
+      saturatingWealth(
+        value.cash as number,
+        value.savings as number,
+        value.debt as number,
+      )
+  ) {
+    return false;
+  }
+
+  if (value.endReason === "completed") {
+    if (
+      value.remainingTurns !== 0 ||
+      value.status !== (value.finalWealth > 0 ? "won" : "lost")
+    ) {
+      return false;
+    }
+  } else if (value.endReason === "manual") {
+    if (
+      value.remainingTurns < 1 ||
+      value.remainingTurns > 40 ||
+      value.deathObserved ||
+      value.status !== (value.finalWealth > 0 ? "won" : "lost")
+    ) {
+      return false;
+    }
+  } else if (
+    value.remainingTurns <= 0 ||
+    !value.deathObserved ||
+    value.status !== "lost" ||
+    value.pendingScore !== null
+  ) {
+    return false;
+  }
+
+  if (value.pendingScore !== null) {
+    const pending = value.pendingScore;
+    if (
+      (value.endReason !== "completed" && value.endReason !== "manual") ||
+      value.status !== "won" ||
+      pending.wealth !== value.finalWealth ||
+      pending.health !== value.hitpoint ||
+      pending.fame !== value.fame ||
+      pending.fameLabel !== fameLabel(value.fame)
+    ) {
+      return false;
+    }
+    if (
+      value.highScores.some((score) => score.id === pending.id) ||
+      !qualifyScore(pending.wealth, value.highScores)
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/** Validates a complete in-memory game, including its embedded rankings. */
+export function isValidActiveGame(value: unknown): value is GameState {
+  return isValidActiveGameCore(value);
+}
+
+export interface PersistedData {
+  activeGame: GameState | null;
+  highScores: HighScore[];
+}
+
+export interface RuntimeBootstrap {
+  createNewGame: (highScores: HighScore[]) => GameState;
+}
+
+export function createInitialGameState(
+  persisted: PersistedData | null,
+  runtime: RuntimeBootstrap,
+): GameState {
+  if (persisted?.activeGame) return persisted.activeGame;
+  const highScores = persisted
+    ? structuredClone(persisted.highScores)
+    : structuredClone(DEFAULT_HIGH_SCORES);
+  return runtime.createNewGame(highScores);
+}
+
+export function parsePersistedState(raw: string): PersistedData | null {
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (!isRecord(value) || value.schemaVersion !== 6) return null;
+
+    const highScores: HighScore[] = isValidHighScores(value.highScores)
+      ? (value.highScores as HighScore[])
+      : structuredClone(DEFAULT_HIGH_SCORES);
+
+    let activeGame: GameState | null = null;
+    if (isRecord(value.activeGame)) {
+      const candidate = { ...value.activeGame, highScores } as GameState;
+      // A missing/corrupt board is replaced by defaults. Drop only an orphaned
+      // pending score that no longer qualifies against that deterministic board.
+      if (
+        candidate.pendingScore &&
+        (highScores.some((score) => score.id === candidate.pendingScore!.id) ||
+          !qualifyScore(candidate.pendingScore!.wealth, highScores))
+      ) {
+        candidate.pendingScore = null;
+      }
+      if (isValidActiveGameCore(candidate)) activeGame = candidate;
+    }
+
+    return { activeGame, highScores };
+  } catch {
+    return null;
+  }
+}
+
+export function serializePersistedState(data: PersistedData): string {
+  const activeGame = data.activeGame
+    ? (({ highScores: _highScores, ...serializedGame }) => serializedGame)(
+        data.activeGame,
+      )
+    : null;
+  return JSON.stringify({
+    schemaVersion: 6,
+    activeGame,
+    highScores: data.highScores,
+  });
 }
 
 export function parseGameState(raw: string): GameState | null {
-  try {
-    const value: unknown = JSON.parse(raw);
-    return isGameState5(value) ? value : null;
-  } catch {
-    return null;
-  }
+  return parsePersistedState(raw)?.activeGame ?? null;
 }
 
 export function serializeGameState(state: GameState): string {
-  return JSON.stringify(state);
+  return serializePersistedState({
+    activeGame: state,
+    highScores: state.highScores,
+  });
 }
 
-export function loadGameState(): GameState | null {
-  if (typeof window === 'undefined') return null;
+export function loadPersistedState(): PersistedData | null {
+  if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? parseGameState(raw) : null;
+    return raw === null ? null : parsePersistedState(raw);
   } catch {
     return null;
   }
 }
 
+export function loadGameState(): GameState | null {
+  return loadPersistedState()?.activeGame ?? null;
+}
+
 export function saveGameState(state: GameState): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STORAGE_KEY, serializeGameState(state));
   } catch {
-    // 存储空间不可用时，游戏仍可在当前页面继续。
+    // Storage is optional; the current in-memory game remains playable.
   }
 }
 
 export function clearGameState(): void {
-  if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(STORAGE_KEY);
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Storage is optional; clearing a save must not break the current game.
+  }
 }

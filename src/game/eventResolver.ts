@@ -6,6 +6,11 @@ import {
 import type { GameRuntime } from "./runtime";
 import type { InventoryEntry, ItemId } from "./types";
 import { ITEM_BY_ID } from "./data/items";
+import {
+  saturatingAdd,
+  saturatingMultiply,
+  saturatingSubtract,
+} from "./numbers";
 
 type Random = Pick<GameRuntime, "nextInt">;
 export interface EventState {
@@ -37,7 +42,10 @@ const inv = (state: EventState, id: ItemId) =>
   state.inventory.find((entry) => entry.id === id);
 
 const used = (state: EventState) =>
-  state.inventory.reduce((total, entry) => total + entry.quantity, 0);
+  state.inventory.reduce(
+    (total, entry) => saturatingAdd(total, entry.quantity),
+    0,
+  );
 
 export function resolveMarketEvents(
   state: EventState,
@@ -52,7 +60,7 @@ export function resolveMarketEvents(
     if (effect.kind === "multiply" || effect.kind === "divide") {
       const oldPrice = state.prices[effect.itemId];
       state.prices[effect.itemId] = effect.kind === "multiply"
-        ? oldPrice * effect.value
+        ? saturatingMultiply(oldPrice, effect.value)
         : Math.trunc(oldPrice / effect.value);
       logs.push({
         index,
@@ -64,7 +72,7 @@ export function resolveMarketEvents(
       continue;
     }
     if (effect.debtIncrease) {
-      state.debt += effect.debtIncrease;
+      state.debt = saturatingAdd(state.debt, effect.debtIncrease);
     }
 
     const log: EventLog = {
@@ -82,13 +90,16 @@ export function resolveMarketEvents(
 
     const quantity = Math.min(effect.quantity, remaining);
     const owned = inv(state, effect.itemId);
-    if (owned) owned.quantity += quantity;
-    else {state.inventory.push({
+    if (owned) {
+      owned.quantity = saturatingAdd(owned.quantity, quantity);
+    } else {
+      state.inventory.push({
         id: effect.itemId,
         name: ITEM_BY_ID.get(effect.itemId)?.name ?? "",
         averagePrice: 0,
         quantity,
-      });}
+      });
+    }
   }
   return logs;
 }
@@ -139,9 +150,9 @@ export function resolveCashEvent(
       const amount = Math.trunc(state.savings / (2 + random.nextInt(20)));
       const increase = random.nextInt(20) % 3 === 0;
       if (increase) {
-        state.savings += amount;
+        state.savings = saturatingAdd(state.savings, amount);
       } else {
-        state.savings -= amount;
+        state.savings = saturatingSubtract(state.savings, amount);
       }
       hackerEvents.push({
         index: -1,
@@ -154,7 +165,7 @@ export function resolveCashEvent(
       });
     } else {
       const amount = Math.trunc(state.savings / (1 + random.nextInt(15)));
-      state.savings += amount;
+      state.savings = saturatingAdd(state.savings, amount);
       hackerEvents.push({
         index: -1,
         description: "黑客入侵银行网络，疯狂修改数据库，我的存款增加了",

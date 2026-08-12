@@ -9,8 +9,17 @@ import { LOCATION_BY_SLOT } from "./data/locations";
 import { createMarket } from "./random";
 import { resolveTravel } from "./engine";
 import { gameRuntime, type GameRuntime } from "./runtime";
-import { DEFAULT_HIGH_SCORES } from './data/highScores';
-import { fameLabel, insertScore, qualifyScore } from './scoring';
+import { DEFAULT_HIGH_SCORES } from "./data/highScores";
+import { fameLabel, insertScore, qualifyScore } from "./scoring";
+import {
+  DOMAIN_MAX,
+  saturatingAdd,
+  saturatingMultiply,
+  saturatingSignedAdd,
+  saturatingSubtract,
+  saturatingWealth,
+  weightedAverage,
+} from "./numbers";
 import type {
   GameState,
   HighScore,
@@ -42,10 +51,13 @@ interface TravelResolvedPayload {
 }
 
 const getStorage = (state: GameState): number =>
-  state.inventory.reduce((total, item) => total + item.quantity, 0);
+  state.inventory.reduce(
+    (total, item) => saturatingAdd(total, item.quantity),
+    0,
+  );
 
 const getWealth = (state: GameState): number =>
-  state.cash + state.savings - state.debt;
+  saturatingWealth(state.cash, state.savings, state.debt);
 
 const addJournal = (
   state: GameState,
@@ -53,6 +65,13 @@ const addJournal = (
   tone: JournalTone = "info",
   day?: number,
 ): void => {
+  if (state.nextJournalId > DOMAIN_MAX - 500) {
+    state.journal = state.journal.slice(-500).map((entry, index) => ({
+      ...entry,
+      id: index + 1,
+    }));
+    state.nextJournalId = state.journal.length + 1;
+  }
   state.journal.push({
     id: state.nextJournalId,
     day: Math.max(
@@ -62,7 +81,7 @@ const addJournal = (
     text,
     tone,
   });
-  state.nextJournalId += 1;
+  state.nextJournalId = saturatingAdd(state.nextJournalId, 1);
   if (state.journal.length > MAX_JOURNAL_ENTRIES) {
     state.journal.splice(0, state.journal.length - MAX_JOURNAL_ENTRIES);
   }
@@ -79,11 +98,13 @@ const addInventory = (
 
   const owned = state.inventory.find((item) => item.id === itemId);
   if (owned) {
-    owned.averagePrice = Math.floor(
-      (owned.averagePrice * owned.quantity + unitPrice * quantity) /
-        (owned.quantity + quantity),
+    owned.averagePrice = weightedAverage(
+      owned.averagePrice,
+      owned.quantity,
+      unitPrice,
+      quantity,
     );
-    owned.quantity += quantity;
+    owned.quantity = saturatingAdd(owned.quantity, quantity);
     return;
   }
 
@@ -105,9 +126,14 @@ const finishGame = (
     let revenue = 0;
     for (const owned of state.inventory) {
       const quote = state.market.find((item) => item.id === owned.id);
-      if (quote) revenue += quote.marketPrice * owned.quantity;
+      if (quote) {
+        revenue = saturatingAdd(
+          revenue,
+          saturatingMultiply(quote.marketPrice, owned.quantity),
+        );
+      }
     }
-    state.cash += revenue;
+    state.cash = saturatingAdd(state.cash, revenue);
     state.inventory = [];
     addJournal(
       state,
@@ -128,21 +154,28 @@ const finishGame = (
   );
 
   if (qualifyScore(wealth, state.highScores) && !state.pendingScore) {
-    const pending: PendingScore = { id: meta.scoreId, wealth, health: state.hitpoint, fame: state.fame, fameLabel: fameLabel(state.fame), completedAt: meta.completedAt };
+    const pending: PendingScore = {
+      id: meta.scoreId,
+      wealth,
+      health: state.hitpoint,
+      fame: state.fame,
+      fameLabel: fameLabel(state.fame),
+      completedAt: meta.completedAt,
+    };
     state.pendingScore = pending;
   }
 };
 
 export const createNewGameState = (
   runtime: GameRuntime,
-  highScores: HighScore[] = [],
+  highScores: HighScore[] = structuredClone(DEFAULT_HIGH_SCORES),
 ): GameState => ({
-  schemaVersion: 5,
+  schemaVersion: 6,
   pendingScore: null,
   totalDays: 40,
   remainingTurns: 40,
   currentLocationSlot: null,
-  locationMode: 'subway' as LocationMode,
+  locationMode: "subway" as LocationMode,
   cash: 2_000,
   savings: 0,
   debt: 5_500,
@@ -165,7 +198,7 @@ export const createNewGameState = (
     },
   ],
   nextJournalId: 2,
-  highScores: highScores.length ? highScores : structuredClone(DEFAULT_HIGH_SCORES),
+  highScores,
   internetCafeVisits: 0,
 });
 
@@ -185,7 +218,7 @@ const gameSlice = createSlice({
     buy(state, action: PayloadAction<{ itemId: ItemId; quantity: number }>) {
       const { itemId, quantity } = action.payload;
       if (state.status !== "playing") return;
-      if (!Number.isInteger(quantity) || quantity < 0) {
+      if (!Number.isSafeInteger(quantity) || quantity < 0) {
         addJournal(state, "买入数量必须是非负整数。", "bad");
         return;
       }
@@ -194,12 +227,12 @@ const gameSlice = createSlice({
         addJournal(state, "黑市老板摆摆手：这里今天没这东西。", "bad");
         return;
       }
-      const cost = quote.marketPrice * quantity;
+      const cost = saturatingMultiply(quote.marketPrice, quantity);
       if (cost > state.cash) {
         addJournal(state, "黑市老板鄙视地看了俺一眼：钱带够了吗？", "bad");
         return;
       }
-      if (getStorage(state) + quantity > state.maxStorage) {
+      if (saturatingAdd(getStorage(state), quantity) > state.maxStorage) {
         addJournal(
           state,
           `出租屋太小，最多只能放 ${state.maxStorage} 件货。`,
@@ -207,7 +240,7 @@ const gameSlice = createSlice({
         );
         return;
       }
-      state.cash -= cost;
+      state.cash = saturatingSubtract(state.cash, cost);
       addInventory(state, itemId, quantity, quote.marketPrice);
       addJournal(
         state,
@@ -218,7 +251,7 @@ const gameSlice = createSlice({
     sell(state, action: PayloadAction<{ itemId: ItemId; quantity: number }>) {
       const { itemId, quantity } = action.payload;
       if (state.status !== "playing") return;
-      if (!Number.isInteger(quantity) || quantity < 0) {
+      if (!Number.isSafeInteger(quantity) || quantity < 0) {
         addJournal(state, "卖出数量必须是非负整数。", "bad");
         return;
       }
@@ -232,9 +265,9 @@ const gameSlice = createSlice({
         addJournal(state, "黑市老板一脸不耐烦：你有这么多货吗？", "bad");
         return;
       }
-      const revenue = quote.marketPrice * quantity;
-      state.cash += revenue;
-      owned.quantity -= quantity;
+      const revenue = saturatingMultiply(quote.marketPrice, quantity);
+      state.cash = saturatingAdd(state.cash, revenue);
+      owned.quantity = saturatingSubtract(owned.quantity, quantity);
       if (owned.quantity === 0) {
         state.inventory = state.inventory.filter((item) => item.id !== itemId);
       }
@@ -249,12 +282,12 @@ const gameSlice = createSlice({
     deposit(state, action: PayloadAction<number>) {
       const amount = action.payload;
       if (state.status !== "playing") return;
-      if (!Number.isInteger(amount) || amount < 0 || amount > state.cash) {
+      if (!Number.isSafeInteger(amount) || amount < 0 || amount > state.cash) {
         addJournal(state, "银行职员说：存款数目不对，或者现金不够。", "bad");
         return;
       }
-      state.cash -= amount;
-      state.savings += amount;
+      state.cash = saturatingSubtract(state.cash, amount);
+      state.savings = saturatingAdd(state.savings, amount);
       addJournal(
         state,
         `存入银行 ${amount.toLocaleString("zh-CN")} 元。`,
@@ -264,12 +297,12 @@ const gameSlice = createSlice({
     withdraw(state, action: PayloadAction<number>) {
       const amount = action.payload;
       if (state.status !== "playing") return;
-      if (!Number.isInteger(amount) || amount < 0 || amount > state.savings) {
+      if (!Number.isSafeInteger(amount) || amount < 0 || amount > state.savings) {
         addJournal(state, "银行职员说：取款数目不对，或者存款不够。", "bad");
         return;
       }
-      state.savings -= amount;
-      state.cash += amount;
+      state.savings = saturatingSubtract(state.savings, amount);
+      state.cash = saturatingAdd(state.cash, amount);
       addJournal(
         state,
         `从银行取出 ${amount.toLocaleString("zh-CN")} 元。`,
@@ -280,7 +313,7 @@ const gameSlice = createSlice({
       const amount = action.payload;
       if (state.status !== "playing") return;
       if (
-        !Number.isInteger(amount) ||
+        !Number.isSafeInteger(amount) ||
         amount < 0 ||
         amount > state.cash ||
         amount > state.debt
@@ -288,8 +321,8 @@ const gameSlice = createSlice({
         addJournal(state, "邮局职员说：还款金额不对。", "bad");
         return;
       }
-      state.cash -= amount;
-      state.debt -= amount;
+      state.cash = saturatingSubtract(state.cash, amount);
+      state.debt = saturatingSubtract(state.debt, amount);
       addJournal(
         state,
         `去邮局寄给村长 ${amount.toLocaleString("zh-CN")} 元。`,
@@ -298,12 +331,12 @@ const gameSlice = createSlice({
     },
     heal(state, action: PayloadAction<number>) {
       const points = action.payload;
-      const cost = points * 3_500;
+      const cost = saturatingMultiply(points, 3_500);
       if (state.status !== "playing") return;
       if (
-        !Number.isInteger(points) ||
+        !Number.isSafeInteger(points) ||
         points <= 0 ||
-        state.hitpoint + points > 100 ||
+        saturatingSignedAdd(state.hitpoint, points) > 100 ||
         cost > state.cash
       ) {
         addJournal(
@@ -313,8 +346,11 @@ const gameSlice = createSlice({
         );
         return;
       }
-      state.cash -= cost;
-      state.hitpoint += points;
+      state.cash = saturatingSubtract(state.cash, cost);
+      state.hitpoint = Math.min(
+        100,
+        saturatingSignedAdd(state.hitpoint, points),
+      );
       addJournal(
         state,
         `花 ${cost.toLocaleString("zh-CN")} 元恢复了 ${points} 点健康。`,
@@ -331,15 +367,17 @@ const gameSlice = createSlice({
         addJournal(state, "中介说：现金不够三万元。", "bad");
         return;
       }
-      state.cash = state.cash <= 30_000 ? state.cash - 25_000 : Math.trunc(state.cash / 2) - 2_000;
+      state.cash = state.cash <= 30_000
+        ? saturatingSubtract(state.cash, 25_000)
+        : saturatingSubtract(Math.trunc(state.cash / 2), 2_000);
       state.maxStorage += 10;
       addJournal(state, `出租屋容量扩大到 ${state.maxStorage} 件。`, "good");
     },
     cafeReward(state, action: PayloadAction<number>) {
       if (state.status !== "playing" || state.internetCafeVisits >= 3 || state.cash < 15) return;
       const reward = action.payload;
-      if (!Number.isInteger(reward) || reward < 1 || reward > 10) return;
-      state.cash += reward;
+      if (!Number.isSafeInteger(reward) || reward < 1 || reward > 10) return;
+      state.cash = saturatingAdd(state.cash, reward);
       state.internetCafeVisits += 1;
       addJournal(state, `俺去网吧免费上了一会儿网，还赚了${reward}元广告费。`, "good");
     },
@@ -386,7 +424,10 @@ const gameSlice = createSlice({
       if (!state.pendingScore) return;
       const pending = state.pendingScore;
       const { fame: _fame, ...scoreFields } = pending;
-      const score: HighScore = { ...scoreFields, name: action.payload.trim() || '无名氏' };
+      const score: HighScore = {
+        ...scoreFields,
+        name: action.payload.trim() || "无名氏",
+      };
       state.highScores = insertScore(state.highScores, score);
       state.pendingScore = null;
     },
@@ -411,7 +452,7 @@ export const restartGame = (): GameThunk => (dispatch, getState, runtime) => {
 
 export const factoryReset = (): GameThunk => (dispatch, _getState, runtime) => {
   dispatch(
-    gameSlice.actions.factoryResetResolved(createNewGameState(runtime, [])),
+    gameSlice.actions.factoryResetResolved(createNewGameState(runtime)),
   );
 };
 

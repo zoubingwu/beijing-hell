@@ -3,7 +3,11 @@ import gameReducer, {
   createNewGameState,
   initialGameState,
 } from '../game/gameSlice';
-import { loadGameState, saveGameState } from '../game/persistence';
+import {
+  createInitialGameState,
+  loadPersistedState,
+  saveGameState,
+} from '../game/persistence';
 import { gameRuntime, type GameRuntime } from '../game/runtime';
 import type { GameState } from '../game/types';
 
@@ -46,8 +50,11 @@ export function createGameStore({
   return gameStore;
 }
 
+const persisted = loadPersistedState();
 export const store = createGameStore({
-  preloadedGame: loadGameState() ?? undefined,
+  preloadedGame: createInitialGameState(persisted, {
+    createNewGame: (scores) => createNewGameState(gameRuntime, scores),
+  }),
   persist: true,
 });
 

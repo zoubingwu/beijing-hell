@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { describe, expect, it } from 'vitest';
 import reducer, { buy, deposit, payDebt, sell, withdraw } from './gameSlice';
 import { initialGameState } from './gameSlice';
+import { DOMAIN_MAX } from './numbers';
 import type { GameRuntime } from './runtime';
 import type { GameState, ItemId } from './types';
 
@@ -30,6 +31,21 @@ describe('交易 reducers', () => {
     store.dispatch(buy({ itemId: 1, quantity: 2 }));
     expect(store.getState().game.cash).toBe(598);
     expect(store.getState().game.inventory[0]).toMatchObject({ quantity: 5, averagePrice: 140 });
+  });
+  it('rejects unsafe integer transaction actions', () => {
+    const store = storeFactory({ cash: DOMAIN_MAX, savings: DOMAIN_MAX, debt: DOMAIN_MAX });
+    const before = numeric(store.getState().game);
+    store.dispatch(buy({ itemId: 1, quantity: DOMAIN_MAX + 1 }));
+    store.dispatch(sell({ itemId: 1, quantity: DOMAIN_MAX + 1 }));
+    store.dispatch(deposit(DOMAIN_MAX + 1));
+    store.dispatch(withdraw(DOMAIN_MAX + 1));
+    store.dispatch(payDebt(DOMAIN_MAX + 1));
+    expect(numeric(store.getState().game)).toEqual(before);
+  });
+  it('saturates sale cash at the safe-integer maximum', () => {
+    const store = storeFactory({ cash: DOMAIN_MAX - 50, inventory: [{ id: 1, name: '商品1', averagePrice: 1, quantity: 1 }] });
+    store.dispatch(sell({ itemId: 1, quantity: 1 }));
+    expect(store.getState().game.cash).toBe(DOMAIN_MAX);
   });
   it('rejects combined cash and capacity limits without changing numeric state', () => {
     const store = storeFactory({ cash: 150, maxStorage: 3, inventory: [{ id: 1, name: '商品1', averagePrice: 100, quantity: 3 }] });
