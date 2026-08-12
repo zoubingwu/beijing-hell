@@ -107,11 +107,11 @@ describe('injected runtime', () => {
     firstStore.dispatch(endEarly());
     secondStore.dispatch(endEarly());
 
-    expect(firstStore.getState().game.highScores[0]).toMatchObject({
+    expect(firstStore.getState().game.pendingScore).toMatchObject({
       id: 'first-id',
       completedAt: '2026-08-12T00:00:00.000Z',
     });
-    expect(secondStore.getState().game.highScores[0]).toMatchObject({
+    expect(secondStore.getState().game.pendingScore).toMatchObject({
       id: 'second-id',
       completedAt: '2026-08-13T00:00:00.000Z',
     });

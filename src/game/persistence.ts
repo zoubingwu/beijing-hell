@@ -8,12 +8,14 @@ import type {
   MarketQuote,
 } from './types';
 
-// Preserve v1-v3 keys for future migrations; Plan005 writes schema 4.
-export const STORAGE_KEY = 'beijing-hell:save:v4';
+// Preserve v1-v4 keys for future migrations; Plan006 writes schema 5.
+export const STORAGE_KEY = 'beijing-hell:save:v5';
+export const legacyKeys = ['beijing-hell:save:v1', 'beijing-hell:save:v2', 'beijing-hell:save:v3', 'beijing-hell:save:v4'] as const;
 const ITEM_IDS = new Set<number>(ITEMS.map((item) => item.id));
 const LOCATION_IDS = new Set<number>(LOCATIONS.map((location) => location.slot));
 const JOURNAL_TONES = new Set(['info', 'good', 'bad', 'warning']);
 const GAME_STATUSES = new Set(['playing', 'won', 'lost']);
+const FAME_LABELS = new Set(['德高望重', '杰出青年', '一般般', '不佳', '争议人物', '差', '很差', '江湖唾弃']);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -54,21 +56,21 @@ const isJournalEntry = (value: unknown): value is JournalEntry =>
 
 const isHighScore = (value: unknown): value is HighScore =>
   isRecord(value) &&
-  typeof value.id === 'string' &&
-  value.id.length > 0 &&
-  isFiniteNumber(value.wealth) &&
-  value.wealth > 0 &&
-  typeof value.completedAt === 'string' &&
-  Number.isFinite(Date.parse(value.completedAt));
+  typeof value.id === 'string' && value.id.length > 0 &&
+  typeof value.name === 'string' &&
+  isFiniteNumber(value.wealth) && value.wealth > 0 &&
+  isFiniteNumber(value.health) &&
+  typeof value.fameLabel === 'string' && FAME_LABELS.has(value.fameLabel) &&
+  (value.completedAt === undefined || (typeof value.completedAt === 'string' && Number.isFinite(Date.parse(value.completedAt))));
 
 function hasUniqueIds(values: readonly { id: number }[]): boolean {
   return new Set(values.map((value) => value.id)).size === values.length;
 }
 
-function isGameState4(value: unknown): value is GameState {
+function isGameState5(value: unknown): value is GameState {
   if (!isRecord(value)) return false;
   if (
-    value.schemaVersion !== 4 ||
+    value.schemaVersion !== 5 ||
     value.totalDays !== 40 ||
     !isIntegerInRange(value.remainingTurns, 0, 40) ||
     !(value.currentLocationSlot === null || (isIntegerInRange(value.currentLocationSlot, 1, 10) && LOCATION_IDS.has(value.currentLocationSlot))) ||
@@ -90,7 +92,8 @@ function isGameState4(value: unknown): value is GameState {
     !Array.isArray(value.market) ||
     !Array.isArray(value.inventory) ||
     !Array.isArray(value.journal) ||
-    !Array.isArray(value.highScores)
+    !Array.isArray(value.highScores) ||
+    !(value.pendingScore === null || (isRecord(value.pendingScore) && typeof value.pendingScore.id === 'string' && value.pendingScore.id.length > 0 && isFiniteNumber(value.pendingScore.wealth) && value.pendingScore.wealth > 0 && isFiniteNumber(value.pendingScore.health) && isFiniteNumber(value.pendingScore.fame) && value.pendingScore.fame >= 0 && value.pendingScore.fame <= 100 && typeof value.pendingScore.fameLabel === 'string' && FAME_LABELS.has(value.pendingScore.fameLabel) && typeof value.pendingScore.completedAt === 'string' && Number.isFinite(Date.parse(value.pendingScore.completedAt))))
   ) {
     return false;
   }
@@ -103,7 +106,9 @@ function isGameState4(value: unknown): value is GameState {
     !hasUniqueIds(value.inventory) ||
     !value.journal.every(isJournalEntry) ||
     value.highScores.length > 10 ||
-    !value.highScores.every(isHighScore)
+    !value.highScores.every(isHighScore) ||
+    new Set((value.highScores as HighScore[]).map((score) => score.id)).size !== value.highScores.length ||
+    (value.highScores as HighScore[]).some((score, index, scores) => index > 0 && scores[index - 1].wealth < score.wealth)
   ) {
     return false;
   }
@@ -122,7 +127,7 @@ function isGameState4(value: unknown): value is GameState {
 export function parseGameState(raw: string): GameState | null {
   try {
     const value: unknown = JSON.parse(raw);
-    return isGameState4(value) ? value : null;
+    return isGameState5(value) ? value : null;
   } catch {
     return null;
   }

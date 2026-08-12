@@ -38,9 +38,9 @@
 | 每日顺序 | 已实施（Plan 003） | `SelectionDlg.cpp:527-530` | 市场→利息→商业→健康→金钱→挨打→扣回合；住院/死亡边界已锁定 |
 | 设施 | 已实施（Plan 004） | `SelectionDlg.cpp:882-932,1661-1686,1982-2008,2063-2097` | 手动卖货名声、医院3500/点、租房+10/上限140及网吧三次奖励边界已接入；交易与设施边界见 Plan 004 测试 |
 | 地点 | 已实施（Plan 005） | `SelectionDlg.cpp:1295-1437,2290-2356` | 十个 slot，subway/surface 标签切换不耗回合；机场为静态信息（`src/components/game/GameWindow.test.tsx` 集成覆盖） |
-| 结算 | 待实施 | `SelectionDlg.cpp` | 待后续计划填写 |
-| 排行榜 | 待实施 | `TopPlayerDlg.cpp:14-26,80-113,142-313` | 待后续计划填写 |
-| 持久化 | schema 4（Plan 005） | `beijing-hell:save:v4`；v1-v3 key 保留供后续迁移 | `src/game/persistence.browser.test.ts` 验证 v4 独立保存/清理；Plan007 负责迁移 |
+| 结算 | 已实施（Plan 006） | `SelectionDlg.cpp:1491-1542,1892-1953` | 自动结束按最终报价清仓；手动结束不清仓；普通死亡不评分，末日死亡继续自动结算 |
+| 排行榜 | 已实施（Plan 006） | `TopPlayerDlg.cpp:14-26,80-113,142-313` | 预置 Top 10、财富门槛、同分插前、姓名/健康/名声字段；复刻 10–19 名声 bug（`src/game/scoring.test.ts`） |
+| 持久化 | schema 5（Plan 006） | `beijing-hell:save:v5`；v1-v4 key 保留供后续迁移 | 当前 schema 5 独立保存；Plan007 负责旧 key 迁移 |
 
 > **已批准偏差（Plan 002）**：原版 `DoRandomStuff` 的 `exist` 标志未在每个赠品事件开始时重置，后续赠品可能沿用旧值并触发列表索引未定义行为。Web 解析器按每个赠品重新检查库存，不复刻该不稳定的列表越界行为。
 

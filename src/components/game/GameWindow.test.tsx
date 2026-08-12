@@ -23,6 +23,37 @@ afterEach(() => {
 });
 
 describe('GameWindow airport integration', () => {
+  it('shows a death-aware result when a completed win observed death', () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const store = createGameStore({
+      runtime: throwingRuntime,
+      preloadedGame: {
+        ...structuredClone(initialGameState),
+        status: 'won',
+        endReason: 'completed',
+        deathObserved: true,
+        pendingScore: null,
+      },
+    });
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    act(() => {
+      root.render(
+        <Provider store={store}>
+          <GameWindow onClose={() => undefined} onMinimize={() => undefined} />
+        </Provider>,
+      );
+    });
+
+    const heading = container.querySelector('h3');
+    expect(heading?.textContent).not.toContain('恭喜！你活着离开了北京。');
+    expect(heading?.textContent).toContain('没能活着离开北京');
+  });
+
   it('opens and closes airport information without changing game state', () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const store = createGameStore({

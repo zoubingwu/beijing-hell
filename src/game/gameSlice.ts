@@ -9,9 +9,12 @@ import { LOCATION_BY_SLOT } from "./data/locations";
 import { createMarket } from "./random";
 import { resolveTravel } from "./engine";
 import { gameRuntime, type GameRuntime } from "./runtime";
+import { DEFAULT_HIGH_SCORES } from './data/highScores';
+import { fameLabel, insertScore, qualifyScore } from './scoring';
 import type {
   GameState,
   HighScore,
+  PendingScore,
   InventoryEntry,
   ItemId,
   JournalTone,
@@ -124,15 +127,9 @@ const finishGame = (
     wealth > 0 ? "good" : "bad",
   );
 
-  if (wealth > 0) {
-    const score: HighScore = {
-      id: meta.scoreId,
-      wealth,
-      completedAt: meta.completedAt,
-    };
-    state.highScores = [...state.highScores, score]
-      .sort((a, b) => b.wealth - a.wealth)
-      .slice(0, 10);
+  if (qualifyScore(wealth, state.highScores) && !state.pendingScore) {
+    const pending: PendingScore = { id: meta.scoreId, wealth, health: state.hitpoint, fame: state.fame, fameLabel: fameLabel(state.fame), completedAt: meta.completedAt };
+    state.pendingScore = pending;
   }
 };
 
@@ -140,7 +137,8 @@ export const createNewGameState = (
   runtime: GameRuntime,
   highScores: HighScore[] = [],
 ): GameState => ({
-  schemaVersion: 4,
+  schemaVersion: 5,
+  pendingScore: null,
   totalDays: 40,
   remainingTurns: 40,
   currentLocationSlot: null,
@@ -167,7 +165,7 @@ export const createNewGameState = (
     },
   ],
   nextJournalId: 2,
-  highScores,
+  highScores: highScores.length ? highScores : structuredClone(DEFAULT_HIGH_SCORES),
   internetCafeVisits: 0,
 });
 
@@ -178,6 +176,7 @@ const gameSlice = createSlice({
   initialState: initialGameState,
   reducers: {
     restartGameResolved(state, action: PayloadAction<GameState>) {
+      if (state.pendingScore) return;
       return { ...action.payload, highScores: state.highScores };
     },
     factoryResetResolved(_state, action: PayloadAction<GameState>) {
@@ -383,11 +382,19 @@ const gameSlice = createSlice({
         state.finalWealth = getWealth(state);
       }
     },
+    submitScoreName(state, action: PayloadAction<string>) {
+      if (!state.pendingScore) return;
+      const pending = state.pendingScore;
+      const { fame: _fame, ...scoreFields } = pending;
+      const score: HighScore = { ...scoreFields, name: action.payload.trim() || '无名氏' };
+      state.highScores = insertScore(state.highScores, score);
+      state.pendingScore = null;
+    },
     endEarlyResolved(state, action: PayloadAction<CompletionMeta>) {
       if (state.status !== "playing") return;
       state.endReason = "manual";
       addJournal(state, "俺决定提前离开北京。", "warning");
-      finishGame(state, action.payload, true);
+      finishGame(state, action.payload, false);
     },
     clearJournal(state) {
       state.journal = [];
@@ -397,7 +404,8 @@ const gameSlice = createSlice({
 
 export const toggleLocationMode = () => gameSlice.actions.toggleLocationMode();
 
-export const restartGame = (): GameThunk => (dispatch, _getState, runtime) => {
+export const restartGame = (): GameThunk => (dispatch, getState, runtime) => {
+  if (getState().game.pendingScore) return;
   dispatch(gameSlice.actions.restartGameResolved(createNewGameState(runtime)));
 };
 
@@ -459,6 +467,7 @@ export const {
   rentStorage,
   sell,
   withdraw,
+  submitScoreName,
 } = gameSlice.actions;
 
 export const visitInternetCafe = (): GameThunk => (dispatch, getState, runtime) => {

@@ -7,15 +7,16 @@ const legacyKeys = [
   'beijing-hell:save:v1',
   'beijing-hell:save:v2',
   'beijing-hell:save:v3',
+  'beijing-hell:save:v4',
 ] as const;
 
 afterEach(() => {
   window.localStorage.clear();
 });
 
-describe('browser persistence schema 4 key isolation', () => {
-  it('preserves legacy sentinels while saving and clearing only v4', () => {
-    const sentinels = ['legacy-one', 'legacy-two', 'legacy-three'];
+describe('browser persistence schema 5 key isolation', () => {
+  it('preserves legacy sentinels while saving and clearing only v5', () => {
+    const sentinels = ['legacy-one', 'legacy-two', 'legacy-three', 'legacy-four'];
     legacyKeys.forEach((key, index) => window.localStorage.setItem(key, sentinels[index]));
 
     const state = structuredClone(initialGameState);

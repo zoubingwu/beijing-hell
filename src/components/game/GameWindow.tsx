@@ -18,6 +18,7 @@ import {
   rentStorage,
   restartGame,
   sell,
+  submitScoreName,
   travelTo,
   visitInternetCafe,
   withdraw,
@@ -134,6 +135,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
   const [marketSelection, setMarketSelection] = useState<ItemId>(1);
   const [inventorySelection, setInventorySelection] = useState<ItemId | null>(null);
   const [quantity, setQuantity] = useState('1');
+  const [scoreName, setScoreName] = useState('');
   const [dialog, setDialog] = useState<DialogKind>(
     game.status === 'playing' ? null : 'result',
   );
@@ -144,8 +146,8 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
   useClickOutside(menuRef, closeMenu, menu !== null);
 
   useEffect(() => {
-    if (game.status !== 'playing') setDialog('result');
-  }, [game.status]);
+    if (game.status !== 'playing' && !game.pendingScore) setDialog('result');
+  }, [game.status, game.pendingScore]);
 
   useEffect(() => {
     const element = journalRef.current;
@@ -201,6 +203,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
   };
 
   const openDialog = (target: Exclude<DialogKind, null>) => {
+    if (game.pendingScore && target === 'restart') return;
     setMenu(null);
     setDialog(target);
   };
@@ -553,7 +556,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
           <div className="scoreDialog">
             {game.highScores.length === 0 ? <p>排行榜还是空的。完成一局并带着正资产回乡即可上榜。</p> : (
               <ol>{game.highScores.map((score) => (
-                <li key={score.id}><b>{formatMoney(score.wealth)} 元</b><span>{new Date(score.completedAt).toLocaleDateString('zh-CN')}</span></li>
+                <li key={score.id}><b>{score.name} · {formatMoney(score.wealth)} 元</b><span>健康 {score.health} · {score.fameLabel}{score.completedAt ? ` · ${new Date(score.completedAt).toLocaleDateString('zh-CN')}` : ''}</span></li>
               ))}</ol>
             )}
             <div className="dialogButtons"><button className="win98Button" type="button" onClick={() => setDialog(null)}>确定</button></div>
@@ -617,18 +620,29 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
         </Win98Dialog>
       ) : null}
 
-      {dialog === 'result' ? (
+      {game.pendingScore ? (
+        <Win98Dialog title="进入富人榜" onClose={() => undefined} width="small">
+          <form className="dialogForm" onSubmit={(event) => { event.preventDefault(); dispatch(submitScoreName(scoreName)); setScoreName(''); }}>
+            <p>恭喜！你的财富、健康、名望达到富人榜门槛。</p><label><span>姓名</span><input className="win98Input" value={scoreName} onChange={(event) => setScoreName(event.target.value)} /></label>
+            <div className="dialogButtons"><button className="win98Button defaultButton" type="submit">确认</button></div>
+          </form>
+        </Win98Dialog>
+      ) : null}
+
+      {dialog === 'result' && !game.pendingScore ? (
         <Win98Dialog title={game.status === 'won' ? '衣锦还乡' : '游戏结束'} onClose={() => setDialog(null)}>
           <div className="resultDialog">
             <div className="resultIcon">{game.status === 'won' ? '🏆' : '☹'}</div>
             <h3>
-              {game.status === 'won'
-                ? '恭喜！你活着离开了北京。'
-                : game.hitpoint <= 0
-                  ? '健康值低于零，本局提前结束。'
-                  : '胜败乃兵家常事，英雄请重新来过。'}
+              {game.deathObserved
+                ? '俺没能活着离开北京，但最后的账还是算清了。'
+                : game.status === 'won'
+                  ? '恭喜！你活着离开了北京。'
+                  : game.endReason === 'died'
+                    ? '健康值耗尽，本局结束。'
+                    : '胜败乃兵家常事，英雄请重新来过。'}
             </h3>
-            {game.status === 'lost' && game.hitpoint <= 0 ? (
+            {game.deathObserved ? (
               <p>
                 {game.debt > 100_000
                   ? '欠款超过十万元后，村长每天都会叫人来讨债并扣除30点健康。记得及时还款或去医院治疗。'

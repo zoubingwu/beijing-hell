@@ -55,6 +55,7 @@ export interface HealthEvent {
 
 export type GameStatus = "playing" | "won" | "lost";
 export type JournalTone = "info" | "good" | "bad" | "warning";
+export type FameLabel = '德高望重' | '杰出青年' | '一般般' | '不佳' | '争议人物' | '差' | '很差' | '江湖唾弃';
 
 export interface JournalEntry {
   id: number;
@@ -65,12 +66,25 @@ export interface JournalEntry {
 
 export interface HighScore {
   id: string;
+  name: string;
   wealth: number;
+  health: number;
+  fameLabel: FameLabel;
+  completedAt?: string;
+}
+
+export interface PendingScore {
+  id: string;
+  wealth: number;
+  health: number;
+  fame: number;
+  fameLabel: FameLabel;
   completedAt: string;
 }
 
 export interface GameState {
-  schemaVersion: 4;
+  schemaVersion: 5;
+  pendingScore: PendingScore | null;
   totalDays: number;
   remainingTurns: number;
   currentLocationSlot: LocationSlot | null;
