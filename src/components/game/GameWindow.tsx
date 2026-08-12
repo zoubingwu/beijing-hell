@@ -646,7 +646,20 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
         <Win98Dialog title={game.status === 'won' ? '衣锦还乡' : '游戏结束'} onClose={() => setDialog(null)}>
           <div className="resultDialog">
             <div className="resultIcon">{game.status === 'won' ? '🏆' : '☹'}</div>
-            <h3>{game.status === 'won' ? '恭喜！你活着离开了北京。' : '胜败乃兵家常事，英雄请重新来过。'}</h3>
+            <h3>
+              {game.status === 'won'
+                ? '恭喜！你活着离开了北京。'
+                : game.hitpoint <= 0
+                  ? '健康值归零，本局提前结束。'
+                  : '胜败乃兵家常事，英雄请重新来过。'}
+            </h3>
+            {game.status === 'lost' && game.hitpoint <= 0 ? (
+              <p>
+                {game.debt > 100_000
+                  ? '欠款超过十万元后，村长每天都会叫人来讨债并扣除30点健康。记得及时还款或去医院治疗。'
+                  : '你在随机事件中耗尽了健康值。记得留意日记中的健康警告，及时去医院治疗。'}
+              </p>
+            ) : null}
             <p>最终财富：<b>{formatMoney(game.finalWealth ?? totalWealth)} 元</b></p>
             <div className="dialogButtons"><button className="win98Button defaultButton" type="button" onClick={confirmRestart}>重新开始</button><button className="win98Button" type="button" onClick={() => setDialog('scores')}>富人榜</button></div>
           </div>
