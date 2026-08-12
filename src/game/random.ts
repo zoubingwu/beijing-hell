@@ -1,4 +1,9 @@
-import { CASH_EVENTS, FREE_ITEM_EVENTS, HEALTH_EVENTS, MARKET_EVENTS } from './data/events';
+import {
+  CASH_EVENTS,
+  FREE_ITEM_EVENTS,
+  HEALTH_EVENTS,
+  MARKET_EVENTS,
+} from './data/events';
 import { ITEMS } from './data/items';
 import type { GameRuntime } from './runtime';
 import type { ItemDefinition, MarketQuote, TravelRoll } from './types';
@@ -23,33 +28,16 @@ export function pick<T>(values: readonly T[], random: RandomSource): T {
   return value;
 }
 
-function chooseDistinctItems(
-  values: readonly ItemDefinition[],
-  count: number,
-  random: RandomSource,
-): Set<number> {
-  const pool = [...values];
-  const selected = new Set<number>();
-  while (selected.size < count && pool.length > 0) {
-    const index = randomInt(pool.length, random);
-    const [item] = pool.splice(index, 1);
-    if (item) selected.add(item.id);
-  }
-  return selected;
-}
-
 export function createMarket(
   soldOutCount: number,
   random: RandomSource,
 ): MarketQuote[] {
-  const soldOut = chooseDistinctItems(ITEMS, soldOutCount, random);
-  return ITEMS.map((item) => ({
-    id: item.id,
-    name: item.name,
-    marketPrice: soldOut.has(item.id)
-      ? 0
-      : item.basePrice + randomInt(item.extraPrice, random),
-  }));
+  const prices: Record<number, number> = {};
+  const order: ItemDefinition[] = [ITEMS[1], ITEMS[7], ITEMS[0], ITEMS[4], ITEMS[6], ITEMS[3], ITEMS[5], ITEMS[2]];
+  for (const item of order) prices[item.id] = item.basePrice + randomInt(item.extraPrice, random);
+  const cxxToTs: readonly number[] = [2, 8, 1, 5, 7, 4, 6, 3];
+  for (let i = 0; i < soldOutCount; i++) prices[cxxToTs[randomInt(8, random)]] = 0;
+  return ITEMS.map((item) => ({ id: item.id, name: item.name, marketPrice: prices[item.id] }));
 }
 
 export function createTravelRoll(
@@ -60,13 +48,11 @@ export function createTravelRoll(
 ): TravelRoll {
   const finalDayIncoming = currentDay >= totalDays - 2;
   const market = createMarket(finalDayIncoming ? 0 : 3, random);
-  const availableItemIds = new Set(
-    market.filter((quote) => quote.marketPrice > 0).map((quote) => quote.id),
+  // Keep the legacy travel payload until Plan 003 wires the full resolver into travel.
+  const availableMarketEvents = MARKET_EVENTS.filter((event) =>
+    market.some((quote) => quote.id === event.relatedItem && quote.marketPrice > 0),
   );
-  const effectiveMarketEvents = MARKET_EVENTS.filter((event) =>
-    availableItemIds.has(event.relatedItem),
-  );
-  const marketEvent = pick(effectiveMarketEvents, random);
+  const marketEvent = pick(availableMarketEvents, random);
   const cashEvent = pick(CASH_EVENTS, random);
   const candidateHealthEvent = pick(HEALTH_EVENTS, random);
   const healthEvent = randomInt(1000, random) % candidateHealthEvent.frequency === 0

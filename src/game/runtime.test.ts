@@ -7,14 +7,17 @@ import { initialGameState } from './gameSlice';
 
 const NEW_GAME_TAPE = [
   { maxExclusive: 19, value: 4 },
-  { maxExclusive: 8, value: 0 },
-  { maxExclusive: 7, value: 6 },
-  { maxExclusive: 6, value: 2 },
   { maxExclusive: 350, value: 0 },
-  { maxExclusive: 180, value: 179 },
+  { maxExclusive: 15000, value: 0 },
+  { maxExclusive: 50, value: 0 },
   { maxExclusive: 2500, value: 1000 },
-  { maxExclusive: 750, value: 42 },
   { maxExclusive: 9000, value: 8999 },
+  { maxExclusive: 600, value: 42 },
+  { maxExclusive: 750, value: 42 },
+  { maxExclusive: 180, value: 179 },
+  { maxExclusive: 8, value: 0 },
+  { maxExclusive: 8, value: 0 },
+  { maxExclusive: 8, value: 0 },
 ] as const;
 
 function createFixedRuntime(): GameRuntime & { assertConsumed(): void } {

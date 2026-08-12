@@ -46,6 +46,18 @@ export interface InventoryEntry {
   quantity: number;
 }
 
+export type MarketEffect =
+  | { kind: 'multiply'; itemId: ItemId; value: number }
+  | { kind: 'divide'; itemId: ItemId; value: number }
+  | { kind: 'gift'; itemId: ItemId; quantity: number; debtIncrease?: number };
+
+export interface MarketEventDefinition {
+  frequency: number;
+  description: string;
+  effect: MarketEffect;
+}
+
+/** Legacy UI payload retained for gameSlice compatibility. */
 export interface MarketEvent {
   description: string;
   relatedItem: ItemId;
@@ -55,6 +67,8 @@ export interface MarketEvent {
 export interface CashEvent {
   description: string;
   lossPercent: number;
+  target: 'cash' | 'savings';
+  frequency: number;
 }
 
 export interface HealthEvent {

@@ -31,13 +31,17 @@
 | 领域 | 状态 | 主要源码依据 | 验收记录 |
 |---|---|---|---|
 | 初始化 | 待实施 | `SelectionDlg.cpp:122-190` | 待后续计划填写 |
-| 价格 | 待实施 | `SelectionDlg.cpp:326-341` | 待后续计划填写 |
-| 18 商业事件 | 待实施 | `SelectionDlg.cpp:1187-1291` | 待后续计划填写 |
-| 12 健康事件 | 待实施 | `SelectionDlg.cpp:1407-1635` | 待后续计划填写 |
-| 7 金钱事件 | 待实施 | `SelectionDlg.cpp:1781-1845` | 待后续计划填写 |
+| 价格 | 已实施（Plan 002） | `SelectionDlg.cpp:1187-1204` | C++ 顺序与可重复售罄已覆盖 |
+| 18 商业事件 | 解析器已实施（Plan 002）；待 Plan 003 接入每日旅行 | `SelectionDlg.cpp:1187-1291` | 18 行频率、整数乘除、赠品与手机欠款；当前旅行仍使用兼容性随机选择 |
+| 12 健康事件 | 解析器已实施（Plan 002）；待 Plan 003 接入每日旅行 | `SelectionDlg.cpp:1407-1635` | 顺序扫描、首个命中停止 |
+| 7 金钱事件 | 解析器已实施（Plan 002）；待 Plan 003 接入每日旅行 | `SelectionDlg.cpp:1781-1845` | 现金/存款整数公式与黑客门值 |
 | 每日顺序 | 待实施 | `SelectionDlg.cpp:527-530` | 待后续计划填写 |
 | 设施 | 待实施 | `SelectionDlg.cpp` | 待后续计划填写 |
 | 地点 | 待实施 | `SelectionDlg.cpp` | 待后续计划填写 |
 | 结算 | 待实施 | `SelectionDlg.cpp` | 待后续计划填写 |
 | 排行榜 | 待实施 | `TopPlayerDlg.cpp:14-26,80-113,142-313` | 待后续计划填写 |
 | 持久化 | 待实施 | Web v2 schema | 待后续计划填写 |
+
+> **已批准偏差（Plan 002）**：原版 `DoRandomStuff` 的 `exist` 标志未在每个赠品事件开始时重置，后续赠品可能沿用旧值并触发列表索引未定义行为。Web 解析器按每个赠品重新检查库存，不复刻该不稳定的列表越界行为。
+
+Plan 002 验收测试：`src/game/random.test.ts`、`src/game/eventResolver.test.ts`。
