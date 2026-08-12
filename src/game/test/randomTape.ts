@@ -6,6 +6,7 @@ export interface RandomTapeEntry {
 }
 
 export interface RandomTape extends Pick<GameRuntime, 'nextInt'> {
+  readonly calls: number;
   assertConsumed(): void;
 }
 
@@ -22,6 +23,7 @@ export function createRandomTape(entries: readonly RandomTapeEntry[]): RandomTap
   let index = 0;
 
   return {
+    get calls() { return index; },
     nextInt(maxExclusive) {
       assertValidMaxExclusive(maxExclusive, '随机带实际上界');
       const entry = entries[index];

@@ -47,9 +47,9 @@ export interface InventoryEntry {
 }
 
 export type MarketEffect =
-  | { kind: 'multiply'; itemId: ItemId; value: number }
-  | { kind: 'divide'; itemId: ItemId; value: number }
-  | { kind: 'gift'; itemId: ItemId; quantity: number; debtIncrease?: number };
+  | { kind: "multiply"; itemId: ItemId; value: number }
+  | { kind: "divide"; itemId: ItemId; value: number }
+  | { kind: "gift"; itemId: ItemId; quantity: number; debtIncrease?: number };
 
 export interface MarketEventDefinition {
   frequency: number;
@@ -57,17 +57,10 @@ export interface MarketEventDefinition {
   effect: MarketEffect;
 }
 
-/** Legacy UI payload retained for gameSlice compatibility. */
-export interface MarketEvent {
-  description: string;
-  relatedItem: ItemId;
-  factor: number;
-}
-
 export interface CashEvent {
   description: string;
   lossPercent: number;
-  target: 'cash' | 'savings';
+  target: "cash" | "savings";
   frequency: number;
 }
 
@@ -77,23 +70,8 @@ export interface HealthEvent {
   frequency: number;
 }
 
-export interface FreeItemEvent {
-  description: string;
-  relatedItem: ItemId;
-  quantity: number;
-}
-
-export interface TravelRoll {
-  destinationId: LocationId;
-  market: MarketQuote[];
-  marketEvent: MarketEvent;
-  cashEvent: CashEvent;
-  healthEvent?: HealthEvent;
-  freeItemEvent?: FreeItemEvent;
-}
-
-export type GameStatus = 'playing' | 'won' | 'lost';
-export type JournalTone = 'info' | 'good' | 'bad' | 'warning';
+export type GameStatus = "playing" | "won" | "lost";
+export type JournalTone = "info" | "good" | "bad" | "warning";
 
 export interface JournalEntry {
   id: number;
@@ -109,10 +87,10 @@ export interface HighScore {
 }
 
 export interface GameState {
-  schemaVersion: 1;
-  currentDay: number;
+  schemaVersion: 2;
   totalDays: number;
-  currentLocationId: LocationId;
+  remainingTurns: number;
+  currentLocationId: LocationId | null;
   cash: number;
   savings: number;
   debt: number;
@@ -123,6 +101,9 @@ export interface GameState {
   inventory: InventoryEntry[];
   status: GameStatus;
   finalWealth: number | null;
+  hackerEnabled: boolean;
+  deathObserved: boolean;
+  endReason: "completed" | "died" | "manual" | null;
   journal: JournalEntry[];
   nextJournalId: number;
   highScores: HighScore[];

@@ -1,8 +1,6 @@
 import type {
   CashEvent,
-  FreeItemEvent,
   HealthEvent,
-  MarketEvent,
   MarketEventDefinition,
   StoragePlan,
 } from "../types";
@@ -102,42 +100,6 @@ export const MARKET_EVENT_DEFINITIONS: readonly MarketEventDefinition[] = [
     effect: { kind: "gift", itemId: 6, quantity: 1, debtIncrease: 2500 },
   },
 ] as const;
-
-export const FREE_ITEM_EVENTS: readonly FreeItemEvent[] = [
-  {
-    description: "厦门的老同学资助俺两部走私汽车。",
-    relatedItem: 8,
-    quantity: 2,
-  },
-  {
-    description: "工商局扫荡后，俺在黑暗角落里发现了老乡丢失的进口香烟。",
-    relatedItem: 2,
-    quantity: 6,
-  },
-  {
-    description: "俺老乡回家前把一些假白酒（剧毒）给俺。",
-    relatedItem: 5,
-    quantity: 4,
-  },
-] as const;
-
-const isPriceEvent = (
-  event: MarketEventDefinition,
-): event is MarketEventDefinition & {
-  effect: Extract<MarketEventDefinition["effect"], { kind: "multiply" | "divide" }>;
-} => event.effect.kind === "multiply" || event.effect.kind === "divide";
-
-/** Legacy UI payload: gifts are resolved by the Plan 002 resolver, not this adapter. */
-export const MARKET_EVENTS: readonly MarketEvent[] = MARKET_EVENT_DEFINITIONS
-  .filter(isPriceEvent)
-  .map((event) => {
-    const effect = event.effect;
-    return {
-      description: event.description,
-      relatedItem: effect.itemId,
-      factor: effect.kind === "multiply" ? effect.value : 1 / effect.value,
-    };
-  });
 
 export const CASH_EVENTS: readonly CashEvent[] = [
   {

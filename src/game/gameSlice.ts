@@ -3,13 +3,13 @@ import {
   type PayloadAction,
   type ThunkAction,
   type UnknownAction,
-} from '@reduxjs/toolkit';
-import { STORAGE_PLANS } from './data/events';
-import { ITEM_BY_ID } from './data/items';
-import { LOCATIONS, LOCATION_BY_ID } from './data/locations';
-import { clamp } from './format';
-import { createMarket, createTravelRoll, pick } from './random';
-import { gameRuntime, type GameRuntime } from './runtime';
+} from "@reduxjs/toolkit";
+import { STORAGE_PLANS } from "./data/events";
+import { ITEM_BY_ID } from "./data/items";
+import { LOCATION_BY_ID } from "./data/locations";
+import { createMarket } from "./random";
+import { resolveTravel } from "./engine";
+import { gameRuntime, type GameRuntime } from "./runtime";
 import type {
   GameState,
   HighScore,
@@ -17,8 +17,7 @@ import type {
   ItemId,
   JournalTone,
   LocationId,
-  TravelRoll,
-} from './types';
+} from "./types";
 
 const MAX_JOURNAL_ENTRIES = 80;
 
@@ -30,7 +29,14 @@ interface CompletionMeta {
   completedAt: string;
 }
 
-interface ResolvedTravel extends TravelRoll, CompletionMeta {}
+interface TravelResolvedPayload {
+  state: GameState;
+  logs: { text: string; tone?: JournalTone }[];
+  destinationId: LocationId;
+  outcome: "continue" | "died" | "completed";
+  eventDay: number;
+  completion?: CompletionMeta;
+}
 
 const getStorage = (state: GameState): number =>
   state.inventory.reduce((total, item) => total + item.quantity, 0);
@@ -41,11 +47,15 @@ const getWealth = (state: GameState): number =>
 const addJournal = (
   state: GameState,
   text: string,
-  tone: JournalTone = 'info',
+  tone: JournalTone = "info",
+  day?: number,
 ): void => {
   state.journal.push({
     id: state.nextJournalId,
-    day: state.currentDay + 1,
+    day: Math.max(
+      1,
+      Math.min(40, day ?? state.totalDays - state.remainingTurns + 1),
+    ),
     text,
     tone,
   });
@@ -98,20 +108,20 @@ const finishGame = (
     state.inventory = [];
     addJournal(
       state,
-      `系统替俺卖掉了剩余货物，共换回 ${revenue.toLocaleString('zh-CN')} 元。`,
-      'info',
+      `系统替俺卖掉了剩余货物，共换回 ${revenue.toLocaleString("zh-CN")} 元。`,
+      "info",
     );
   }
 
   const wealth = getWealth(state);
   state.finalWealth = wealth;
-  state.status = wealth > 0 ? 'won' : 'lost';
+  state.status = wealth > 0 ? "won" : "lost";
   addJournal(
     state,
     wealth > 0
-      ? `四十天到了！俺带着 ${wealth.toLocaleString('zh-CN')} 元总资产回乡。`
-      : `四十天过去，俺最终负债 ${Math.abs(wealth).toLocaleString('zh-CN')} 元，只能灰溜溜回乡。`,
-    wealth > 0 ? 'good' : 'bad',
+      ? `四十天到了！俺带着 ${wealth.toLocaleString("zh-CN")} 元总资产回乡。`
+      : `四十天过去，俺最终负债 ${Math.abs(wealth).toLocaleString("zh-CN")} 元，只能灰溜溜回乡。`,
+    wealth > 0 ? "good" : "bad",
   );
 
   if (wealth > 0) {
@@ -130,10 +140,10 @@ export const createNewGameState = (
   runtime: GameRuntime,
   highScores: HighScore[] = [],
 ): GameState => ({
-  schemaVersion: 1,
-  currentDay: 0,
+  schemaVersion: 2,
   totalDays: 40,
-  currentLocationId: pick(LOCATIONS, runtime).id,
+  remainingTurns: 40,
+  currentLocationId: null,
   cash: 2_000,
   savings: 0,
   debt: 5_500,
@@ -142,14 +152,17 @@ export const createNewGameState = (
   maxStorage: 100,
   market: createMarket(3, runtime),
   inventory: [],
-  status: 'playing',
+  status: "playing",
   finalWealth: null,
+  hackerEnabled: false,
+  deathObserved: false,
+  endReason: null,
   journal: [
     {
       id: 1,
       day: 1,
-      tone: 'info',
-      text: '俺带着两千元来到北京，还欠村长五千五百元。四十天内，一定要闯出个名堂！',
+      tone: "info",
+      text: "俺带着两千元来到北京，还欠村长五千五百元。四十天内，一定要闯出个名堂！",
     },
   ],
   nextJournalId: 2,
@@ -160,7 +173,7 @@ export const createNewGameState = (
 export const initialGameState = createNewGameState(gameRuntime);
 
 const gameSlice = createSlice({
-  name: 'game',
+  name: "game",
   initialState: initialGameState,
   reducers: {
     restartGameResolved(state, action: PayloadAction<GameState>) {
@@ -171,48 +184,52 @@ const gameSlice = createSlice({
     },
     buy(state, action: PayloadAction<{ itemId: ItemId; quantity: number }>) {
       const { itemId, quantity } = action.payload;
-      if (state.status !== 'playing') return;
+      if (state.status !== "playing") return;
       if (!Number.isInteger(quantity) || quantity <= 0) {
-        addJournal(state, '买入数量必须是大于零的整数。', 'bad');
+        addJournal(state, "买入数量必须是大于零的整数。", "bad");
         return;
       }
       const quote = state.market.find((item) => item.id === itemId);
       if (!quote || quote.marketPrice <= 0) {
-        addJournal(state, '黑市老板摆摆手：这里今天没这东西。', 'bad');
+        addJournal(state, "黑市老板摆摆手：这里今天没这东西。", "bad");
         return;
       }
       const cost = quote.marketPrice * quantity;
       if (cost > state.cash) {
-        addJournal(state, '黑市老板鄙视地看了俺一眼：钱带够了吗？', 'bad');
+        addJournal(state, "黑市老板鄙视地看了俺一眼：钱带够了吗？", "bad");
         return;
       }
       if (getStorage(state) + quantity > state.maxStorage) {
-        addJournal(state, `出租屋太小，最多只能放 ${state.maxStorage} 件货。`, 'bad');
+        addJournal(
+          state,
+          `出租屋太小，最多只能放 ${state.maxStorage} 件货。`,
+          "bad",
+        );
         return;
       }
       state.cash -= cost;
       addInventory(state, itemId, quantity, quote.marketPrice);
       addJournal(
         state,
-        `买进 ${quantity} 件${quote.name}，花了 ${cost.toLocaleString('zh-CN')} 元。`,
-        'good',
+        `买进 ${quantity} 件${quote.name}，花了 ${cost.toLocaleString("zh-CN")} 元。`,
+        "good",
       );
     },
     sell(state, action: PayloadAction<{ itemId: ItemId; quantity: number }>) {
       const { itemId, quantity } = action.payload;
-      if (state.status !== 'playing') return;
+      if (state.status !== "playing") return;
       if (!Number.isInteger(quantity) || quantity <= 0) {
-        addJournal(state, '卖出数量必须是大于零的整数。', 'bad');
+        addJournal(state, "卖出数量必须是大于零的整数。", "bad");
         return;
       }
       const quote = state.market.find((item) => item.id === itemId);
       const owned = state.inventory.find((item) => item.id === itemId);
       if (!quote || quote.marketPrice <= 0) {
-        addJournal(state, '黑市老板摆摆手：这东西今天不收。', 'bad');
+        addJournal(state, "黑市老板摆摆手：这东西今天不收。", "bad");
         return;
       }
       if (!owned || quantity > owned.quantity) {
-        addJournal(state, '黑市老板一脸不耐烦：你有这么多货吗？', 'bad');
+        addJournal(state, "黑市老板一脸不耐烦：你有这么多货吗？", "bad");
         return;
       }
       const revenue = quote.marketPrice * quantity;
@@ -223,75 +240,95 @@ const gameSlice = createSlice({
       }
       addJournal(
         state,
-        `卖掉 ${quantity} 件${quote.name}，收回 ${revenue.toLocaleString('zh-CN')} 元。`,
-        'good',
+        `卖掉 ${quantity} 件${quote.name}，收回 ${revenue.toLocaleString("zh-CN")} 元。`,
+        "good",
       );
     },
     deposit(state, action: PayloadAction<number>) {
       const amount = action.payload;
-      if (state.status !== 'playing') return;
+      if (state.status !== "playing") return;
       if (!Number.isInteger(amount) || amount <= 0 || amount > state.cash) {
-        addJournal(state, '银行职员说：存款数目不对，或者现金不够。', 'bad');
+        addJournal(state, "银行职员说：存款数目不对，或者现金不够。", "bad");
         return;
       }
       state.cash -= amount;
       state.savings += amount;
-      addJournal(state, `存入银行 ${amount.toLocaleString('zh-CN')} 元。`, 'good');
+      addJournal(
+        state,
+        `存入银行 ${amount.toLocaleString("zh-CN")} 元。`,
+        "good",
+      );
     },
     withdraw(state, action: PayloadAction<number>) {
       const amount = action.payload;
-      if (state.status !== 'playing') return;
+      if (state.status !== "playing") return;
       if (!Number.isInteger(amount) || amount <= 0 || amount > state.savings) {
-        addJournal(state, '银行职员说：取款数目不对，或者存款不够。', 'bad');
+        addJournal(state, "银行职员说：取款数目不对，或者存款不够。", "bad");
         return;
       }
       state.savings -= amount;
       state.cash += amount;
-      addJournal(state, `从银行取出 ${amount.toLocaleString('zh-CN')} 元。`, 'good');
+      addJournal(
+        state,
+        `从银行取出 ${amount.toLocaleString("zh-CN")} 元。`,
+        "good",
+      );
     },
     payDebt(state, action: PayloadAction<number>) {
       const amount = action.payload;
-      if (state.status !== 'playing') return;
+      if (state.status !== "playing") return;
       if (
         !Number.isInteger(amount) ||
         amount <= 0 ||
         amount > state.cash ||
         amount > state.debt
       ) {
-        addJournal(state, '邮局职员说：还款金额不对。', 'bad');
+        addJournal(state, "邮局职员说：还款金额不对。", "bad");
         return;
       }
       state.cash -= amount;
       state.debt -= amount;
-      addJournal(state, `去邮局寄给村长 ${amount.toLocaleString('zh-CN')} 元。`, 'good');
+      addJournal(
+        state,
+        `去邮局寄给村长 ${amount.toLocaleString("zh-CN")} 元。`,
+        "good",
+      );
     },
     heal(state, action: PayloadAction<number>) {
       const points = action.payload;
       const cost = points * 2_500;
-      if (state.status !== 'playing') return;
+      if (state.status !== "playing") return;
       if (
         !Number.isInteger(points) ||
         points <= 0 ||
         state.hitpoint + points > 100 ||
         cost > state.cash
       ) {
-        addJournal(state, '医生说：治疗点数不对、身体不需要，或者钱不够。', 'bad');
+        addJournal(
+          state,
+          "医生说：治疗点数不对、身体不需要，或者钱不够。",
+          "bad",
+        );
         return;
       }
       state.cash -= cost;
       state.hitpoint += points;
-      addJournal(state, `花 ${cost.toLocaleString('zh-CN')} 元恢复了 ${points} 点健康。`, 'good');
+      addJournal(
+        state,
+        `花 ${cost.toLocaleString("zh-CN")} 元恢复了 ${points} 点健康。`,
+        "good",
+      );
     },
     rentStorage(state, action: PayloadAction<number>) {
       const capacity = action.payload;
       const plan = STORAGE_PLANS.find((entry) => entry.capacity === capacity);
-      if (state.status !== 'playing') return;
+      if (state.status !== "playing") return;
       if (!plan || plan.capacity <= state.maxStorage) {
-        addJournal(state, '中介说：这套房不比你现在的出租屋大。', 'bad');
+        addJournal(state, "中介说：这套房不比你现在的出租屋大。", "bad");
         return;
       }
       if (plan.price > state.cash) {
-        addJournal(state, '中介掐指一算：你带的钱还不够。', 'bad');
+        addJournal(state, "中介掐指一算：你带的钱还不够。", "bad");
         return;
       }
       state.cash -= plan.price;
@@ -299,114 +336,60 @@ const gameSlice = createSlice({
       addJournal(
         state,
         `租下${plan.label}，出租屋容量扩大到 ${plan.capacity} 件。`,
-        'good',
+        "good",
       );
     },
     visitInternetCafe(state) {
-      if (state.status !== 'playing') return;
-      if (state.lastCafeDay === state.currentDay) {
-        addJournal(state, '网吧老板说：今天的广告你已经点过了。', 'warning');
+      if (state.status !== "playing") return;
+      const currentDay = state.totalDays - state.remainingTurns;
+      if (state.lastCafeDay === currentDay) {
+        addJournal(state, "网吧老板说：今天的广告你已经点过了。", "warning");
         return;
       }
-      state.lastCafeDay = state.currentDay;
+      state.lastCafeDay = currentDay;
       state.cash += 3;
-      addJournal(state, '俺去网吧免费上了一会儿网，还赚了3元广告费。', 'good');
+      addJournal(state, "俺去网吧免费上了一会儿网，还赚了3元广告费。", "good");
     },
     travelRejected(state, action: PayloadAction<string>) {
-      addJournal(state, action.payload, 'bad');
+      addJournal(state, action.payload, "bad");
     },
-    travelResolved(state, action: PayloadAction<ResolvedTravel>) {
-      if (state.status !== 'playing') return;
+    travelResolved(state, action: PayloadAction<TravelResolvedPayload>) {
+      if (state.status !== "playing") return;
       const destination = LOCATION_BY_ID.get(action.payload.destinationId);
-      if (!destination || action.payload.destinationId === state.currentLocationId) return;
-
-      state.currentLocationId = destination.id;
-      state.market = action.payload.market;
-      addJournal(state, `俺悄悄地来到了${destination.name}。`, 'info');
-
-      if (state.debt > 0) {
-        state.debt = Math.floor(state.debt * 1.1);
-      }
-
-      if (action.payload.healthEvent) {
-        state.hitpoint = clamp(
-          state.hitpoint - action.payload.healthEvent.loss,
-          0,
-          100,
-        );
-        addJournal(state, action.payload.healthEvent.description, 'bad');
-      }
-
-      const affectedQuote = state.market.find(
-        (item) => item.id === action.payload.marketEvent.relatedItem,
-      );
-      if (affectedQuote) {
-        affectedQuote.marketPrice = Math.floor(
-          affectedQuote.marketPrice * action.payload.marketEvent.factor,
-        );
-      }
-      addJournal(state, action.payload.marketEvent.description, 'warning');
-
-      state.cash = Math.floor(
-        state.cash * ((100 - action.payload.cashEvent.lossPercent) / 100),
-      );
-      addJournal(state, action.payload.cashEvent.description, 'bad');
-
-      if (action.payload.freeItemEvent) {
-        const available = state.maxStorage - getStorage(state);
-        const received = Math.min(available, action.payload.freeItemEvent.quantity);
-        if (received > 0) {
-          addInventory(
-            state,
-            action.payload.freeItemEvent.relatedItem,
-            received,
-            0,
-          );
-          addJournal(
-            state,
-            `${action.payload.freeItemEvent.description}（得到 ${received} 件）`,
-            'good',
-          );
-        } else {
-          addJournal(
-            state,
-            `${action.payload.freeItemEvent.description} 可惜出租屋已经塞满了。`,
-            'warning',
-          );
-        }
-      }
-
-      if (state.debt > 100_000) {
-        state.hitpoint = clamp(state.hitpoint - 30, 0, 100);
-        addJournal(state, '俺欠钱太多，村长叫一群老乡揍了俺一顿！（损失30点健康）', 'bad');
-      }
-
-      if (state.hitpoint <= 0) {
-        state.status = 'lost';
-        state.finalWealth = getWealth(state);
-        addJournal(state, '俺倒在街头，日记本上写着：“北京，我将再来！”', 'bad');
+      if (
+        !destination ||
+        action.payload.destinationId === state.currentLocationId
+      )
         return;
-      }
-
-      state.currentDay = Math.min(state.currentDay + 1, state.totalDays - 1);
-      addJournal(state, '又迎来了新的一天。', 'info');
-
-      if (state.currentDay === state.totalDays - 2) {
-        addJournal(state, '俺明天就要回乡了，快把全部货物卖掉！', 'warning');
-      }
-      if (state.hitpoint <= 30) {
-        addJournal(state, '俺的身体……好痛……快去医院。', 'warning');
-      } else if (state.hitpoint <= 60) {
-        addJournal(state, '俺身体很虚弱，再不治疗就危险了。', 'warning');
-      }
-
-      if (state.currentDay >= state.totalDays - 1) {
-        finishGame(state, action.payload, true);
+      const resolved = action.payload.state;
+      Object.assign(state, resolved);
+      state.currentLocationId = destination.id;
+      addJournal(
+        state,
+        `俺悄悄地来到了${destination.name}。`,
+        "info",
+        action.payload.eventDay,
+      );
+      for (const log of action.payload.logs)
+        addJournal(
+          state,
+          log.text,
+          log.tone ?? "info",
+          action.payload.eventDay,
+        );
+      if (action.payload.outcome === "completed" && action.payload.completion) {
+        state.endReason = "completed";
+        finishGame(state, action.payload.completion, true);
+      } else if (action.payload.outcome === "died") {
+        state.endReason = "died";
+        state.status = "lost";
+        state.finalWealth = getWealth(state);
       }
     },
     endEarlyResolved(state, action: PayloadAction<CompletionMeta>) {
-      if (state.status !== 'playing') return;
-      addJournal(state, '俺决定提前离开北京。', 'warning');
+      if (state.status !== "playing") return;
+      state.endReason = "manual";
+      addJournal(state, "俺决定提前离开北京。", "warning");
       finishGame(state, action.payload, true);
     },
     clearJournal(state) {
@@ -415,49 +398,54 @@ const gameSlice = createSlice({
   },
 });
 
-export const restartGame = (): GameThunk =>
-  (dispatch, _getState, runtime) => {
-    dispatch(gameSlice.actions.restartGameResolved(createNewGameState(runtime)));
-  };
+export const restartGame = (): GameThunk => (dispatch, _getState, runtime) => {
+  dispatch(gameSlice.actions.restartGameResolved(createNewGameState(runtime)));
+};
 
-export const factoryReset = (): GameThunk =>
-  (dispatch, _getState, runtime) => {
-    dispatch(gameSlice.actions.factoryResetResolved(createNewGameState(runtime, [])));
-  };
+export const factoryReset = (): GameThunk => (dispatch, _getState, runtime) => {
+  dispatch(
+    gameSlice.actions.factoryResetResolved(createNewGameState(runtime, [])),
+  );
+};
 
-export const endEarly = (): GameThunk =>
-  (dispatch, _getState, runtime) => {
-    dispatch(gameSlice.actions.endEarlyResolved({
+export const endEarly = (): GameThunk => (dispatch, _getState, runtime) => {
+  dispatch(
+    gameSlice.actions.endEarlyResolved({
       scoreId: runtime.createId(),
       completedAt: runtime.now(),
-    }));
-  };
+    }),
+  );
+};
 
-export const travelTo = (destinationId: LocationId): GameThunk =>
+export const travelTo =
+  (destinationId: LocationId): GameThunk =>
   (dispatch, getState, runtime) => {
     const state = getState().game;
-    if (state.status !== 'playing') {
-      dispatch(gameSlice.actions.travelRejected('这一局已经结束，请开始新游戏。'));
+    if (state.status !== "playing") {
+      dispatch(
+        gameSlice.actions.travelRejected("这一局已经结束，请开始新游戏。"),
+      );
       return;
     }
     if (!LOCATION_BY_ID.has(destinationId)) {
-      dispatch(gameSlice.actions.travelRejected('不好意思，没听说过这地儿。'));
+      dispatch(gameSlice.actions.travelRejected("不好意思，没听说过这地儿。"));
       return;
     }
-    if (destinationId === state.currentLocationId) {
-      dispatch(gameSlice.actions.travelRejected('俺现在就在这地儿呀。'));
-      return;
-    }
+    // Same-location travel is a true no-op: do not dispatch or consume runtime metadata.
+    if (destinationId === state.currentLocationId) return;
+    const resolution = resolveTravel(state, destinationId, runtime);
+    const completion =
+      resolution.outcome === "completed"
+        ? { scoreId: runtime.createId(), completedAt: runtime.now() }
+        : undefined;
     dispatch(
       gameSlice.actions.travelResolved({
-        ...createTravelRoll(
-          destinationId,
-          state.currentDay,
-          state.totalDays,
-          runtime,
-        ),
-        scoreId: runtime.createId(),
-        completedAt: runtime.now(),
+        state: resolution.state,
+        logs: resolution.logs,
+        destinationId,
+        outcome: resolution.outcome,
+        eventDay: resolution.eventDay,
+        completion,
       }),
     );
   };

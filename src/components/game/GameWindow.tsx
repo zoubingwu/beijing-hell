@@ -176,7 +176,8 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
   const selectedOwned = game.inventory.find((item) => item.id === inventorySelection);
   const parsedQuantity = Number(quantity);
   const canPlay = game.status === 'playing';
-  const news = NEWS_HEADLINES[game.currentDay % NEWS_HEADLINES.length];
+  const currentDay = game.totalDays - game.remainingTurns;
+  const news = NEWS_HEADLINES[currentDay % NEWS_HEADLINES.length];
 
   useEffect(() => {
     if (!visibleMarket.some((item) => item.id === marketSelection)) {

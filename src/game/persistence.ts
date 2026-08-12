@@ -8,7 +8,8 @@ import type {
   MarketQuote,
 } from './types';
 
-const STORAGE_KEY = 'beijing-hell:save:v1';
+// v1 is deliberately preserved untouched for Plan007 migration; this interim schema uses v2.
+const STORAGE_KEY = 'beijing-hell:save:v2';
 const ITEM_IDS = new Set<number>(ITEMS.map((item) => item.id));
 const LOCATION_IDS = new Set<number>(LOCATIONS.map((location) => location.id));
 const JOURNAL_TONES = new Set(['info', 'good', 'bad', 'warning']);
@@ -67,15 +68,17 @@ function hasUniqueIds(values: readonly { id: number }[]): boolean {
 function isGameState(value: unknown): value is GameState {
   if (!isRecord(value)) return false;
   if (
-    value.schemaVersion !== 1 ||
+    value.schemaVersion !== 2 ||
     value.totalDays !== 40 ||
-    !isIntegerInRange(value.currentDay, 0, 39) ||
-    !isIntegerInRange(value.currentLocationId, 1, 19) ||
-    !LOCATION_IDS.has(value.currentLocationId) ||
+    !isIntegerInRange(value.remainingTurns, 0, 40) ||
+    !(value.currentLocationId === null || (isIntegerInRange(value.currentLocationId, 1, 19) && LOCATION_IDS.has(value.currentLocationId))) ||
     !isIntegerInRange(value.cash, 0, Number.MAX_SAFE_INTEGER) ||
     !isIntegerInRange(value.savings, 0, Number.MAX_SAFE_INTEGER) ||
     !isIntegerInRange(value.debt, 0, Number.MAX_SAFE_INTEGER) ||
-    !isIntegerInRange(value.hitpoint, 0, 100) ||
+    !isFiniteNumber(value.hitpoint) ||
+    typeof value.hackerEnabled !== 'boolean' ||
+    typeof value.deathObserved !== 'boolean' ||
+    !(value.endReason === null || value.endReason === 'completed' || value.endReason === 'died' || value.endReason === 'manual') ||
     !isIntegerInRange(value.fame, 0, 100) ||
     !isIntegerInRange(value.maxStorage, 100, Number.MAX_SAFE_INTEGER) ||
     typeof value.status !== 'string' ||
@@ -84,7 +87,7 @@ function isGameState(value: unknown): value is GameState {
     !isIntegerInRange(value.nextJournalId, 1, Number.MAX_SAFE_INTEGER) ||
     !(
       value.lastCafeDay === null ||
-      isIntegerInRange(value.lastCafeDay, 0, 39)
+      isIntegerInRange(value.lastCafeDay, 0, 40)
     ) ||
     !Array.isArray(value.market) ||
     !Array.isArray(value.inventory) ||

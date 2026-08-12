@@ -6,7 +6,6 @@ import { createRandomTape } from './test/randomTape';
 import { initialGameState } from './gameSlice';
 
 const NEW_GAME_TAPE = [
-  { maxExclusive: 19, value: 4 },
   { maxExclusive: 350, value: 0 },
   { maxExclusive: 15000, value: 0 },
   { maxExclusive: 50, value: 0 },
