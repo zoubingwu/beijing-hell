@@ -54,6 +54,49 @@ describe('GameWindow airport integration', () => {
     expect(heading?.textContent).toContain('没能活着离开北京');
   });
 
+  it('opens help through the button menu sequence and shows canonical rules and item ids', () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const store = createGameStore({ runtime: throwingRuntime, preloadedGame: structuredClone(initialGameState) });
+    const container = document.createElement('div'); document.body.appendChild(container); containers.push(container);
+    const root = createRoot(container); roots.push(root);
+    act(() => { root.render(<Provider store={store}><GameWindow onClose={() => undefined} onMinimize={() => undefined} /></Provider>); });
+    const help = Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.includes('帮助'));
+    act(() => help?.click());
+    const item = Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.includes('游戏说明'));
+    act(() => item?.click());
+    const text = container.textContent ?? '';
+    for (const phrase of ['5,500', '10%', '1%', '低于85', '3天', '3,500', '15', '3次', '事件后', '手动结束不清仓', '机场', '盗版VCD']) expect(text).toContain(phrase);
+    expect(text).toContain('现金恰好30,000元时剩5,000元，超过30,000元时剩下“现金整数除以2，再减2,000元”');
+  });
+
+  it('uses end reason and observed death for result copy', () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const renderResult = (patch: Partial<typeof initialGameState>) => {
+      const store = createGameStore({ runtime: throwingRuntime, preloadedGame: { ...structuredClone(initialGameState), status: 'won', pendingScore: null, ...patch } });
+      const container = document.createElement('div'); document.body.appendChild(container); containers.push(container);
+      const root = createRoot(container); roots.push(root);
+      act(() => { root.render(<Provider store={store}><GameWindow onClose={() => undefined} onMinimize={() => undefined} /></Provider>); });
+      return container.textContent ?? '';
+    };
+    const manual = renderResult({ endReason: 'manual', deathObserved: false });
+    const manualWithUnrelatedFields = renderResult({
+      status: 'lost',
+      endReason: 'manual',
+      deathObserved: false,
+      hitpoint: -99,
+      cash: 0,
+      debt: 999_999,
+      finalWealth: -999_999,
+    });
+    expect(manual).toContain('俺决定提前结束，本局已按现有资产结算');
+    expect(manualWithUnrelatedFields).toContain('俺决定提前结束，本局已按现有资产结算');
+    const died = renderResult({ status: 'lost', endReason: 'died', deathObserved: true });
+    const diedWithUnrelatedFields = renderResult({ status: 'won', endReason: 'died', deathObserved: true, cash: 999_999 });
+    expect(died).toContain('健康降到零以下，本局结束');
+    expect(diedWithUnrelatedFields).toContain('健康降到零以下，本局结束');
+    expect(died).not.toContain('健康事件'); expect(died).not.toContain('欠债来源');
+  });
+
   it('opens and closes airport information without changing game state', () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const store = createGameStore({

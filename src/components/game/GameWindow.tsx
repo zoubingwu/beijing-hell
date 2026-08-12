@@ -115,15 +115,37 @@ function NumberDialog({
 
 const LOCATION_SLOTS = LOCATIONS;
 
-const HELP_TEXT = [
-  '一、在当前地点的黑市里低价买进物品。',
-  '二、点击另一个地铁站移动；每次移动消耗一天。',
-  '三、观察新地点的价格，把涨价的货物卖掉。',
-  '四、现金和存款都会遇到随机事件；现金损失可存银行规避，存款按日增加1%利息。',
-  '五、欠村长的钱每天增加10%利息，超过十万会挨打。',
-  '六、健康值降到0以下会死亡并强制住院；医院每恢复1点收费3500元。',
-  '七、出租屋初始只能放100件货，可找中介换大房子。',
-  '八、你只能在北京待40天，最后按现金+存款-债务结算。',
+type ResultPresentation = {
+  title: string;
+  icon: string;
+  heading: string;
+  detail: string;
+};
+
+/** Result copy is selected from the domain end reason, never from UI status. */
+export function resultPresentation(endReason: string | null, deathObserved: boolean): ResultPresentation {
+  switch (endReason) {
+    case 'completed':
+      return deathObserved
+        ? { title: '本局结算', icon: '🏆', heading: '俺没能活着离开北京，但最后的账还是算清了。', detail: '本局已完成结算。' }
+        : { title: '本局结算', icon: '🏆', heading: '恭喜！你活着离开了北京。', detail: '本局已完成结算。' };
+    case 'manual':
+      return { title: '本局结算', icon: '🏆', heading: '俺决定提前结束，本局已按现有资产结算。', detail: '本局按当前资产完成结算。' };
+    case 'died':
+      return { title: '游戏结束', icon: '☹', heading: '健康降到零以下，本局结束。', detail: '本局未完成结算。' };
+    default:
+      return { title: '游戏结束', icon: '☹', heading: '本局状态未知。', detail: '无法显示结算原因。' };
+  }
+}
+
+const HELP_LINES = [
+  '一、初到北京带着2,000元，先欠村长5,500元；每天移动后欠款增加10%，存款增加1%的利息。',
+  '二、随机事件并非每天必发；一天可能发生多个商业事件。现金事件只影响对应的钱袋。',
+  '三、当健康低于85且剩余天数超过3天时，无条件强制住院；医院手动治疗每点3,500元。住院耗时1或2天并增加债务；只有在不满足住院条件时，健康低于0才会被观察为死亡。',
+  '四、租房至少需要30,000元现金，每次容量增加10件，最多140件；现金恰好30,000元时剩5,000元，超过30,000元时剩下“现金整数除以2，再减2,000元”。',
+  '五、网吧需要至少15元现金，一局最多3次，每次奖励1–10元。',
+  '六、剩余天数归零时（无住院正好第40次移动）自动按事件后的报价清仓；手动结束不清仓，机场只提供信息。',
+  '七、出售第7号或第5号商品会降低名声；交易、银行、邮局和设施操作都不会额外消耗旅行天数。',
 ] as const;
 
 export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
@@ -554,7 +576,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
       {dialog === 'scores' ? (
         <Win98Dialog title="北京富人榜 Top 10" onClose={() => setDialog(null)}>
           <div className="scoreDialog">
-            {game.highScores.length === 0 ? <p>排行榜还是空的。完成一局并带着正资产回乡即可上榜。</p> : (
+            {game.highScores.length === 0 ? <p>排行榜为空；完成一局并带着正资产回乡即可上榜。榜单已满时，财富不低于当前榜尾即可上榜。</p> : (
               <ol>{game.highScores.map((score) => (
                 <li key={score.id}><b>{score.name} · {formatMoney(score.wealth)} 元</b><span>健康 {score.health} · {score.fameLabel}{score.completedAt ? ` · ${new Date(score.completedAt).toLocaleDateString('zh-CN')}` : ''}</span></li>
               ))}</ol>
@@ -568,7 +590,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
         <Win98Dialog title="北京浮生记 · 游戏说明" onClose={() => setDialog(null)} width="large">
           <div className="helpDialog">
             <h3>四十天北京生存指南</h3>
-            {HELP_TEXT.map((text) => <p key={text}>{text}</p>)}
+            {HELP_LINES.map((text) => <p key={text}>{text}</p>)}
             <h3>商品提示</h3>
             <ul>{[...ITEM_BY_ID.values()].map((item) => <li key={item.id}><b>{item.name}：</b>{item.description}</li>)}</ul>
             <div className="dialogButtons"><button className="win98Button" type="button" onClick={() => setDialog(null)}>看明白了</button></div>
@@ -584,16 +606,16 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
               <h3>北京浮生记 2.0</h3>
               <p>Win98 风格 React + TypeScript 重制版</p>
               <p>原作：Guoly Computing Company（1999-2001）</p>
-              <p>本项目规则参考仓库 master 分支。</p>
+              <p>本项目规则参考仓库固定提交 c57351d45102e0dfbe34ef9f282ce089b4c8a5。</p>
               <p>
-                GitHub：
+                原版源码：
                 <a
                   className="aboutRepoLink"
-                  href="https://github.com/zoubingwu/beijing-hell"
+                  href="https://github.com/chrisguo/beijing_fushengji/tree/c57351d45102e0dfbe34ef9f282ce089b4c8a5"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  zoubingwu/beijing-hell
+                  chrisguo/beijing_fushengji@c57351d45102e0dfbe34ef9f282ce089b4c8a5
                 </a>
               </p>
             </div>
@@ -623,37 +645,26 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
       {game.pendingScore ? (
         <Win98Dialog title="进入富人榜" onClose={() => undefined} width="small">
           <form className="dialogForm" onSubmit={(event) => { event.preventDefault(); dispatch(submitScoreName(scoreName)); setScoreName(''); }}>
-            <p>恭喜！你的财富、健康、名望达到富人榜门槛。</p><label><span>姓名</span><input className="win98Input" value={scoreName} onChange={(event) => setScoreName(event.target.value)} /></label>
+            <p>财富达到富人榜门槛；健康和名声会一同记录。</p><label><span>姓名</span><input className="win98Input" value={scoreName} onChange={(event) => setScoreName(event.target.value)} /></label>
             <div className="dialogButtons"><button className="win98Button defaultButton" type="submit">确认</button></div>
           </form>
         </Win98Dialog>
       ) : null}
 
-      {dialog === 'result' && !game.pendingScore ? (
-        <Win98Dialog title={game.status === 'won' ? '衣锦还乡' : '游戏结束'} onClose={() => setDialog(null)}>
+      {dialog === 'result' && !game.pendingScore ? (() => {
+        const presentation = resultPresentation(game.endReason, game.deathObserved);
+        return (
+        <Win98Dialog title={presentation.title} onClose={() => setDialog(null)}>
           <div className="resultDialog">
-            <div className="resultIcon">{game.status === 'won' ? '🏆' : '☹'}</div>
-            <h3>
-              {game.deathObserved
-                ? '俺没能活着离开北京，但最后的账还是算清了。'
-                : game.status === 'won'
-                  ? '恭喜！你活着离开了北京。'
-                  : game.endReason === 'died'
-                    ? '健康值耗尽，本局结束。'
-                    : '胜败乃兵家常事，英雄请重新来过。'}
-            </h3>
-            {game.deathObserved ? (
-              <p>
-                {game.debt > 100_000
-                  ? '欠款超过十万元后，村长每天都会叫人来讨债并扣除30点健康。记得及时还款或去医院治疗。'
-                  : '你在随机事件中耗尽了健康值。健康值低于零会强制住院，记得及时去医院治疗。'}
-              </p>
-            ) : null}
+            <div className="resultIcon">{presentation.icon}</div>
+            <h3>{presentation.heading}</h3>
+            <p>{presentation.detail}</p>
             <p>最终财富：<b>{formatMoney(game.finalWealth ?? totalWealth)} 元</b></p>
             <div className="dialogButtons"><button className="win98Button defaultButton" type="button" onClick={confirmRestart}>重新开始</button><button className="win98Button" type="button" onClick={() => setDialog('scores')}>富人榜</button></div>
           </div>
         </Win98Dialog>
-      ) : null}
+        );
+      })() : null}
     </div>
   );
 }
