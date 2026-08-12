@@ -32,7 +32,7 @@ const fresh = (setup: ReturnType<typeof createRandomTape>, patch: Partial<GameSt
 describe("pure original turn engine", () => {
   it("starts with forty turns and no location", () => {
     const tape = createRandomTape(marketEntries());
-    expect(createNewGameState(runtime(tape))).toMatchObject({ cash: 2000, savings: 0, debt: 5500, remainingTurns: 40, currentLocationId: null });
+    expect(createNewGameState(runtime(tape))).toMatchObject({ cash: 2000, savings: 0, debt: 5500, remainingTurns: 40, currentLocationSlot: null });
     tape.assertConsumed();
   });
   it("does not mutate input and applies debt interest before decrement", () => {
@@ -188,7 +188,7 @@ describe("pure original turn engine", () => {
 describe("travel thunk guards and metadata", () => {
   const throwingMeta = (): GameRuntime => ({ nextInt: () => { throw new Error("unexpected RNG"); }, now: () => { throw new Error("unexpected now"); }, createId: () => { throw new Error("unexpected id"); } });
   it("same location uses no runtime and does not decrement", () => {
-    const setup = createRandomTape(marketEntries()); const state = fresh(setup, { currentLocationId: 1 }); setup.assertConsumed();
+    const setup = createRandomTape(marketEntries()); const state = fresh(setup, { currentLocationSlot: 1 }); setup.assertConsumed();
     const store = configureStore({ reducer: { game: reducer }, middleware: g => g({ thunk: { extraArgument: throwingMeta() } }) });
     store.dispatch({ type: "game/restartGameResolved", payload: state });
     const before = store.getState().game;

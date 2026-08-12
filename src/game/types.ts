@@ -1,24 +1,6 @@
 export type ItemId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-export type LocationId =
-  | 1
-  | 2
-  | 3
-  | 4
-  | 5
-  | 6
-  | 7
-  | 8
-  | 9
-  | 10
-  | 11
-  | 12
-  | 13
-  | 14
-  | 15
-  | 16
-  | 17
-  | 18
-  | 19;
+export type LocationSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+export type LocationMode = 'subway' | 'surface';
 
 export interface ItemDefinition {
   id: ItemId;
@@ -29,8 +11,9 @@ export interface ItemDefinition {
 }
 
 export interface LocationDefinition {
-  id: LocationId;
-  name: string;
+  slot: LocationSlot;
+  subway: string;
+  surface: string;
 }
 
 export interface MarketQuote {
@@ -87,10 +70,11 @@ export interface HighScore {
 }
 
 export interface GameState {
-  schemaVersion: 3;
+  schemaVersion: 4;
   totalDays: number;
   remainingTurns: number;
-  currentLocationId: LocationId | null;
+  currentLocationSlot: LocationSlot | null;
+  locationMode: LocationMode;
   cash: number;
   savings: number;
   debt: number;

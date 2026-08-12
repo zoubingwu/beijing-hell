@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { initialGameState } from './gameSlice';
 import { parseGameState, serializeGameState, STORAGE_KEY } from './persistence';
 
-describe('save schema 3 parser', () => {
+describe('save schema 4 parser', () => {
   it('round-trips internet cafe visits without browser storage', () => {
     const state = { ...structuredClone(initialGameState), internetCafeVisits: 2 };
     const parsed = parseGameState(serializeGameState(state));
-    expect(STORAGE_KEY).toBe('beijing-hell:save:v3');
+    expect(STORAGE_KEY).toBe('beijing-hell:save:v4');
     expect(parsed).toEqual(state);
   });
 

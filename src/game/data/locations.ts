@@ -1,27 +1,18 @@
-import type { LocationDefinition } from '../types';
+import type { LocationDefinition, LocationSlot } from '../types';
 
 export const LOCATIONS: readonly LocationDefinition[] = [
-  { id: 1, name: '建国门' },
-  { id: 2, name: '北京站' },
-  { id: 3, name: '西直门' },
-  { id: 4, name: '崇文门' },
-  { id: 5, name: '东直门' },
-  { id: 6, name: '复兴门' },
-  { id: 7, name: '积水潭' },
-  { id: 8, name: '长椿街' },
-  { id: 9, name: '公主坟' },
-  { id: 10, name: '苹果园' },
-  { id: 11, name: '永安里' },
-  { id: 12, name: '海淀大街' },
-  { id: 13, name: '永定门' },
-  { id: 14, name: '三元东桥' },
-  { id: 15, name: '文津街' },
-  { id: 16, name: '北辰西路' },
-  { id: 17, name: '菜户营' },
-  { id: 18, name: '翠微路' },
-  { id: 19, name: '八角地铁' },
+  { slot: 1, subway: '建国门', surface: '永安里' },
+  { slot: 2, subway: '北京站', surface: '方庄' },
+  { slot: 3, subway: '西直门', surface: '海淀大街' },
+  { slot: 4, subway: '崇文门', surface: '永定门' },
+  { slot: 5, subway: '东直门', surface: '三元西桥' },
+  { slot: 6, subway: '复兴门', surface: '府右街' },
+  { slot: 7, subway: '积水潭', surface: '亚运村' },
+  { slot: 8, subway: '长椿街', surface: '玉泉营' },
+  { slot: 9, subway: '公主坟', surface: '翠微路' },
+  { slot: 10, subway: '苹果园', surface: '八角西路' },
 ] as const;
 
-export const LOCATION_BY_ID = new Map(
-  LOCATIONS.map((location) => [location.id, location]),
+export const LOCATION_BY_SLOT = new Map<LocationSlot, LocationDefinition>(
+  LOCATIONS.map((location) => [location.slot, location]),
 );

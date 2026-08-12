@@ -8,11 +8,10 @@ import type {
   MarketQuote,
 } from './types';
 
-// v1 and v2 are deliberately preserved untouched for Plan007 migration; this interim schema uses v3.
-// Do not read or write either older key until that migration is implemented.
-export const STORAGE_KEY = 'beijing-hell:save:v3';
+// Preserve v1-v3 keys for future migrations; Plan005 writes schema 4.
+export const STORAGE_KEY = 'beijing-hell:save:v4';
 const ITEM_IDS = new Set<number>(ITEMS.map((item) => item.id));
-const LOCATION_IDS = new Set<number>(LOCATIONS.map((location) => location.id));
+const LOCATION_IDS = new Set<number>(LOCATIONS.map((location) => location.slot));
 const JOURNAL_TONES = new Set(['info', 'good', 'bad', 'warning']);
 const GAME_STATUSES = new Set(['playing', 'won', 'lost']);
 
@@ -66,13 +65,14 @@ function hasUniqueIds(values: readonly { id: number }[]): boolean {
   return new Set(values.map((value) => value.id)).size === values.length;
 }
 
-function isGameState3(value: unknown): value is GameState {
+function isGameState4(value: unknown): value is GameState {
   if (!isRecord(value)) return false;
   if (
-    value.schemaVersion !== 3 ||
+    value.schemaVersion !== 4 ||
     value.totalDays !== 40 ||
     !isIntegerInRange(value.remainingTurns, 0, 40) ||
-    !(value.currentLocationId === null || (isIntegerInRange(value.currentLocationId, 1, 19) && LOCATION_IDS.has(value.currentLocationId))) ||
+    !(value.currentLocationSlot === null || (isIntegerInRange(value.currentLocationSlot, 1, 10) && LOCATION_IDS.has(value.currentLocationSlot))) ||
+    !(value.locationMode === 'subway' || value.locationMode === 'surface') ||
     !isIntegerInRange(value.cash, 0, Number.MAX_SAFE_INTEGER) ||
     !isIntegerInRange(value.savings, 0, Number.MAX_SAFE_INTEGER) ||
     !isIntegerInRange(value.debt, 0, Number.MAX_SAFE_INTEGER) ||
@@ -122,7 +122,7 @@ function isGameState3(value: unknown): value is GameState {
 export function parseGameState(raw: string): GameState | null {
   try {
     const value: unknown = JSON.parse(raw);
-    return isGameState3(value) ? value : null;
+    return isGameState4(value) ? value : null;
   } catch {
     return null;
   }

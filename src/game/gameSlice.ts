@@ -5,7 +5,7 @@ import {
   type UnknownAction,
 } from "@reduxjs/toolkit";
 import { ITEM_BY_ID } from "./data/items";
-import { LOCATION_BY_ID } from "./data/locations";
+import { LOCATION_BY_SLOT } from "./data/locations";
 import { createMarket } from "./random";
 import { resolveTravel } from "./engine";
 import { gameRuntime, type GameRuntime } from "./runtime";
@@ -15,7 +15,8 @@ import type {
   InventoryEntry,
   ItemId,
   JournalTone,
-  LocationId,
+  LocationSlot,
+  LocationMode,
 } from "./types";
 
 const MAX_JOURNAL_ENTRIES = 80;
@@ -31,7 +32,7 @@ interface CompletionMeta {
 interface TravelResolvedPayload {
   state: GameState;
   logs: { text: string; tone?: JournalTone }[];
-  destinationId: LocationId;
+  destinationSlot: LocationSlot;
   outcome: "continue" | "died" | "completed";
   eventDay: number;
   completion?: CompletionMeta;
@@ -139,10 +140,11 @@ export const createNewGameState = (
   runtime: GameRuntime,
   highScores: HighScore[] = [],
 ): GameState => ({
-  schemaVersion: 3,
+  schemaVersion: 4,
   totalDays: 40,
   remainingTurns: 40,
-  currentLocationId: null,
+  currentLocationSlot: null,
+  locationMode: 'subway' as LocationMode,
   cash: 2_000,
   savings: 0,
   debt: 5_500,
@@ -345,20 +347,23 @@ const gameSlice = createSlice({
     travelRejected(state, action: PayloadAction<string>) {
       addJournal(state, action.payload, "bad");
     },
+    toggleLocationMode(state) {
+      state.locationMode = state.locationMode === 'subway' ? 'surface' : 'subway';
+    },
     travelResolved(state, action: PayloadAction<TravelResolvedPayload>) {
       if (state.status !== "playing") return;
-      const destination = LOCATION_BY_ID.get(action.payload.destinationId);
+      const destination = LOCATION_BY_SLOT.get(action.payload.destinationSlot);
       if (
         !destination ||
-        action.payload.destinationId === state.currentLocationId
+        action.payload.destinationSlot === state.currentLocationSlot
       )
         return;
       const resolved = action.payload.state;
       Object.assign(state, resolved);
-      state.currentLocationId = destination.id;
+      state.currentLocationSlot = destination.slot;
       addJournal(
         state,
-        `俺悄悄地来到了${destination.name}。`,
+        `俺悄悄地来到了${state.locationMode === 'subway' ? destination.subway : destination.surface}。`,
         "info",
         action.payload.eventDay,
       );
@@ -390,6 +395,8 @@ const gameSlice = createSlice({
   },
 });
 
+export const toggleLocationMode = () => gameSlice.actions.toggleLocationMode();
+
 export const restartGame = (): GameThunk => (dispatch, _getState, runtime) => {
   dispatch(gameSlice.actions.restartGameResolved(createNewGameState(runtime)));
 };
@@ -410,7 +417,7 @@ export const endEarly = (): GameThunk => (dispatch, _getState, runtime) => {
 };
 
 export const travelTo =
-  (destinationId: LocationId): GameThunk =>
+  (destinationSlot: LocationSlot): GameThunk =>
   (dispatch, getState, runtime) => {
     const state = getState().game;
     if (state.status !== "playing") {
@@ -419,13 +426,13 @@ export const travelTo =
       );
       return;
     }
-    if (!LOCATION_BY_ID.has(destinationId)) {
+    if (!LOCATION_BY_SLOT.has(destinationSlot)) {
       dispatch(gameSlice.actions.travelRejected("不好意思，没听说过这地儿。"));
       return;
     }
     // Same-location travel is a true no-op: do not dispatch or consume runtime metadata.
-    if (destinationId === state.currentLocationId) return;
-    const resolution = resolveTravel(state, destinationId, runtime);
+    if (destinationSlot === state.currentLocationSlot) return;
+    const resolution = resolveTravel(state, destinationSlot, runtime);
     const completion =
       resolution.outcome === "completed"
         ? { scoreId: runtime.createId(), completedAt: runtime.now() }
@@ -434,7 +441,7 @@ export const travelTo =
       gameSlice.actions.travelResolved({
         state: resolution.state,
         logs: resolution.logs,
-        destinationId,
+        destinationSlot,
         outcome: resolution.outcome,
         eventDay: resolution.eventDay,
         completion,

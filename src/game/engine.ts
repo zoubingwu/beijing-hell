@@ -6,7 +6,7 @@ import {
   type EventState,
 } from './eventResolver';
 import type { GameRuntime } from './runtime';
-import type { GameState, LocationId, JournalTone } from './types';
+import type { GameState, LocationSlot, JournalTone } from './types';
 
 export interface TurnLogDraft {
   text: string;
@@ -23,13 +23,13 @@ export interface TravelResolution {
 /** Pure one-day turn resolver. Runtime is used only for injected randomness. */
 export function resolveTravel(
   input: GameState,
-  destinationId: LocationId,
+  destinationSlot: LocationSlot,
   runtime: Pick<GameRuntime, 'nextInt'>,
 ): TravelResolution {
   const state: GameState = structuredClone(input);
   const logs: TurnLogDraft[] = [];
   const eventDay = Math.min(40, state.totalDays - state.remainingTurns + 1);
-  state.currentLocationId = destinationId;
+  state.currentLocationSlot = destinationSlot;
   const leaveout = state.remainingTurns <= 2 ? 0 : 3;
   state.market = createMarket(leaveout, runtime);
   if (state.debt > 0) state.debt += Math.floor(state.debt * 0.1);

@@ -1,4 +1,4 @@
-import { LOCATION_BY_ID } from './data/locations';
+import { LOCATION_BY_SLOT } from './data/locations';
 import type { GameState } from './types';
 
 type RootState = { game: GameState };
@@ -6,7 +6,7 @@ type RootState = { game: GameState };
 export const selectGame = (state: RootState): GameState => state.game;
 
 export const selectCurrentLocation = (state: RootState) =>
-  state.game.currentLocationId === null ? undefined : LOCATION_BY_ID.get(state.game.currentLocationId);
+  state.game.currentLocationSlot === null ? undefined : LOCATION_BY_SLOT.get(state.game.currentLocationSlot);
 
 export const selectStorageUsed = (state: RootState): number =>
   state.game.inventory.reduce((total, item) => total + item.quantity, 0);

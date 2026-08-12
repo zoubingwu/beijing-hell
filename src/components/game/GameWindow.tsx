@@ -12,6 +12,7 @@ import {
   clearJournal,
   deposit,
   endEarly,
+  toggleLocationMode,
   heal,
   payDebt,
   rentStorage,
@@ -31,7 +32,7 @@ import {
   selectStorageUsed,
   selectTotalWealth,
 } from '../../game/selectors';
-import type { ItemId, LocationId } from '../../game/types';
+import type { ItemId } from '../../game/types';
 import { useClickOutside } from '../../hooks/useClickOutside';
 import { Win98Dialog } from '../win98/Dialog';
 import { SevenSegmentDisplay } from './SevenSegmentDisplay';
@@ -45,7 +46,7 @@ type DialogKind =
   | 'help'
   | 'about'
   | 'leave'
-  | 'city'
+  | 'airport'
   | 'restart'
   | 'result'
   | null;
@@ -111,15 +112,7 @@ function NumberDialog({
   );
 }
 
-const PRIMARY_LOCATION_IDS = new Set<LocationId>([
-  3, 7, 5, 10, 9, 6, 1, 8, 4, 2,
-]);
-const PRIMARY_LOCATIONS = LOCATIONS.filter((location) =>
-  PRIMARY_LOCATION_IDS.has(location.id),
-);
-const OTHER_LOCATIONS = LOCATIONS.filter(
-  (location) => !PRIMARY_LOCATION_IDS.has(location.id),
-);
+const LOCATION_SLOTS = LOCATIONS;
 
 const HELP_TEXT = [
   '一、在当前地点的黑市里低价买进物品。',
@@ -254,7 +247,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
               <button type="button" role="menuitem" onClick={() => openDialog('post')}>邮局</button>
               <button type="button" role="menuitem" onClick={() => openDialog('rent')}>租房中介</button>
               <button type="button" role="menuitem" onClick={() => { dispatch(visitInternetCafe()); setMenu(null); }}>网吧</button>
-              <button type="button" role="menuitem" onClick={() => openDialog('leave')}>首都国际机场</button>
+              <button type="button" role="menuitem" onClick={() => openDialog('airport')}>首都国际机场</button>
             </div>
           ) : null}
         </div>
@@ -440,17 +433,17 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
           </fieldset>
 
           <fieldset className="locationPanel">
-            <legend>北京地铁站</legend>
+            <legend>{game.locationMode === 'subway' ? '北京地铁站' : '北京地面街区'}</legend>
             <div className="locationGrid">
-              {PRIMARY_LOCATIONS.map((target) => (
+              {LOCATION_SLOTS.map((target) => (
                 <button
-                  className={`win98Button locationButton${target.id === game.currentLocationId ? ' current' : ''}`}
+                  className={`win98Button locationButton${target.slot === game.currentLocationSlot ? ' current' : ''}`}
                   type="button"
-                  key={target.id}
-                  disabled={!canPlay || target.id === game.currentLocationId}
-                  onClick={() => dispatch(travelTo(target.id))}
+                  key={target.slot}
+                  disabled={!canPlay || target.slot === game.currentLocationSlot}
+                  onClick={() => dispatch(travelTo(target.slot))}
                 >
-                  {target.name}
+                  {game.locationMode === 'subway' ? target.subway : target.surface}
                 </button>
               ))}
             </div>
@@ -458,9 +451,9 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
               className="win98Button browseCityButton"
               type="button"
               disabled={!canPlay}
-              onClick={() => setDialog('city')}
+              onClick={() => dispatch(toggleLocationMode())}
             >
-              我要逛京城……
+              {game.locationMode === 'subway' ? '我要逛京城……' : '我要进地铁'}
             </button>
           </fieldset>
         </div>
@@ -471,7 +464,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
           <button className="win98Button" type="button" onClick={() => setDialog('post')}>✉ 邮局</button>
           <button className="win98Button" type="button" onClick={() => setDialog('rent')}>⌂ 租房中介</button>
           <button className="win98Button" type="button" onClick={() => dispatch(visitInternetCafe())}>▧ 网吧</button>
-          <button className="win98Button" type="button" onClick={() => setDialog('leave')}>✈ 机场</button>
+          <button className="win98Button" type="button" onClick={() => setDialog('airport')}>✈ 机场</button>
           <button className="win98Button bossButton" type="button" onClick={onMinimize}>老板来了！</button>
         </div>
       </div>
@@ -555,31 +548,6 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
         </Win98Dialog>
       ) : null}
 
-      {dialog === 'city' ? (
-        <Win98Dialog title="我要逛京城" onClose={() => setDialog(null)} width="large">
-          <div className="cityDialog">
-            <p>除了二环地铁的主要生意场所，俺还可以到北京其他地方碰碰运气。</p>
-            <div className="cityLocationGrid">
-              {OTHER_LOCATIONS.map((target) => (
-                <button
-                  className={`win98Button${target.id === game.currentLocationId ? ' current' : ''}`}
-                  type="button"
-                  key={target.id}
-                  disabled={!canPlay || target.id === game.currentLocationId}
-                  onClick={() => {
-                    dispatch(travelTo(target.id));
-                    setDialog(null);
-                  }}
-                >
-                  {target.name}
-                </button>
-              ))}
-            </div>
-            <div className="dialogButtons"><button className="win98Button" type="button" onClick={() => setDialog(null)}>不逛了</button></div>
-          </div>
-        </Win98Dialog>
-      ) : null}
-
       {dialog === 'scores' ? (
         <Win98Dialog title="北京富人榜 Top 10" onClose={() => setDialog(null)}>
           <div className="scoreDialog">
@@ -638,8 +606,14 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
       ) : null}
 
       {dialog === 'leave' ? (
+        <Win98Dialog title="结束本局" onClose={() => setDialog(null)} width="small">
+          <div className="confirmDialog"><p>确定要结束本局吗？当前进度将按提前结束结算。</p><div className="dialogButtons"><button className="win98Button defaultButton" type="button" onClick={() => { dispatch(endEarly()); setDialog(null); }}>确定</button><button className="win98Button" type="button" onClick={() => setDialog(null)}>取消</button></div></div>
+        </Win98Dialog>
+      ) : null}
+
+      {dialog === 'airport' ? (
         <Win98Dialog title="首都国际机场" onClose={() => setDialog(null)} width="small">
-          <div className="confirmDialog"><p>现在离开会立刻按当前黑市价格卖掉全部货物并结算本局。确定登机吗？</p><div className="dialogButtons"><button className="win98Button defaultButton" type="button" disabled={!canPlay} onClick={() => { dispatch(endEarly()); setDialog(null); }}>离开北京</button><button className="win98Button" type="button" onClick={() => setDialog(null)}>再等等</button></div></div>
+          <div className="confirmDialog"><p>首都国际机场提供前往全国各地的航班。这里仅提供机场信息，不会改变游戏状态。</p><div className="dialogButtons"><button className="win98Button defaultButton" type="button" onClick={() => setDialog(null)}>知道了</button></div></div>
         </Win98Dialog>
       ) : null}
 
