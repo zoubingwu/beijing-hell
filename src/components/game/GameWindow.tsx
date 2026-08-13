@@ -606,16 +606,15 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
               <h3>北京浮生记 2.0</h3>
               <p>Win98 风格 React + TypeScript 重制版</p>
               <p>原作：Guoly Computing Company（1999-2001）</p>
-              <p>本项目规则参考仓库固定提交 c57351d45102e0dfbe34ef9f282ce089b4c8a5。</p>
               <p>
-                原版源码：
+                项目源码：
                 <a
                   className="aboutRepoLink"
-                  href="https://github.com/chrisguo/beijing_fushengji/tree/c57351d45102e0dfbe34ef9f282ce089b4c8a5"
+                  href="https://github.com/zoubingwu/beijing-hell"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  chrisguo/beijing_fushengji@c57351d45102e0dfbe34ef9f282ce089b4c8a5
+                  github.com/zoubingwu/beijing-hell
                 </a>
               </p>
             </div>

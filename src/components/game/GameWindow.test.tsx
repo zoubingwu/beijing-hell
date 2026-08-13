@@ -69,6 +69,22 @@ describe('GameWindow airport integration', () => {
     expect(text).toContain('现金恰好30,000元时剩5,000元，超过30,000元时剩下“现金整数除以2，再减2,000元”');
   });
 
+  it('links the about dialog to this remake repository', () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const store = createGameStore({ runtime: throwingRuntime, preloadedGame: structuredClone(initialGameState) });
+    const container = document.createElement('div'); document.body.appendChild(container); containers.push(container);
+    const root = createRoot(container); roots.push(root);
+    act(() => { root.render(<Provider store={store}><GameWindow onClose={() => undefined} onMinimize={() => undefined} /></Provider>); });
+    const help = Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.includes('帮助'));
+    act(() => help?.click());
+    const about = Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.includes('关于北京浮生记'));
+    act(() => about?.click());
+    const link = container.querySelector<HTMLAnchorElement>('.aboutRepoLink');
+    expect(link?.href).toBe('https://github.com/zoubingwu/beijing-hell');
+    expect(link?.textContent?.trim()).toBe('github.com/zoubingwu/beijing-hell');
+    expect(container.textContent).not.toContain('chrisguo/beijing_fushengji');
+  });
+
   it('uses end reason and observed death for result copy', () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const renderResult = (patch: Partial<typeof initialGameState>) => {
