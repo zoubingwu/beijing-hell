@@ -59,6 +59,24 @@ const getStorage = (state: GameState): number =>
 const getWealth = (state: GameState): number =>
   saturatingWealth(state.cash, state.savings, state.debt);
 
+interface StorageRentQuote {
+  cost: number;
+  remainingCash: number;
+}
+
+export const quoteStorageRent = (cash: number): StorageRentQuote | null => {
+  if (!Number.isSafeInteger(cash) || cash < 30_000) return null;
+
+  const remainingCash = cash === 30_000
+    ? 5_000
+    : saturatingSubtract(Math.trunc(cash / 2), 2_000);
+
+  return {
+    cost: saturatingSubtract(cash, remainingCash),
+    remainingCash,
+  };
+};
+
 const addJournal = (
   state: GameState,
   text: string,
@@ -363,13 +381,12 @@ const gameSlice = createSlice({
         addJournal(state, "中介说：容量已经到顶了。", "bad");
         return;
       }
-      if (state.cash < 30_000) {
+      const quote = quoteStorageRent(state.cash);
+      if (!quote) {
         addJournal(state, "中介说：现金不够三万元。", "bad");
         return;
       }
-      state.cash = state.cash <= 30_000
-        ? saturatingSubtract(state.cash, 25_000)
-        : saturatingSubtract(Math.trunc(state.cash / 2), 2_000);
+      state.cash = quote.remainingCash;
       state.maxStorage += 10;
       addJournal(state, `出租屋容量扩大到 ${state.maxStorage} 件。`, "good");
     },

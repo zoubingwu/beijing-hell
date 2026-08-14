@@ -15,6 +15,7 @@ import {
   toggleLocationMode,
   heal,
   payDebt,
+  quoteStorageRent,
   rentStorage,
   restartGame,
   sell,
@@ -197,6 +198,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
   const canPlay = game.status === 'playing';
   const currentDay = game.totalDays - game.remainingTurns;
   const news = NEWS_HEADLINES[currentDay % NEWS_HEADLINES.length];
+  const storageRentQuote = quoteStorageRent(game.cash);
 
   useEffect(() => {
     if (!visibleMarket.some((item) => item.id === marketSelection)) {
@@ -557,15 +559,15 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
               <button
                 className="win98Button rentPlan"
                 type="button"
-                disabled={!canPlay || game.maxStorage >= 140 || game.cash < 30_000}
+                disabled={!canPlay || game.maxStorage >= 140 || !storageRentQuote}
                 onClick={() => {
                   dispatch(rentStorage());
                   setDialog(null);
                 }}
               >
-                <b>中介报价不透明</b>
+                <b>{storageRentQuote ? `本次租金：${formatMoney(storageRentQuote.cost)} 元` : '现金不足'}</b>
                 <span>容量增加10件（最多140件）</span>
-                <span>现金至少需要30,000元</span>
+                <span>{storageRentQuote ? `租房后现金：${formatMoney(storageRentQuote.remainingCash)} 元` : '现金至少需要30,000元'}</span>
               </button>
             </div>
             <div className="dialogButtons"><button className="win98Button" type="button" onClick={() => setDialog(null)}>算了</button></div>

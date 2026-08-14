@@ -113,6 +113,48 @@ describe('GameWindow airport integration', () => {
     expect(died).not.toContain('健康事件'); expect(died).not.toContain('欠债来源');
   });
 
+  it('shows the exact rental charge before confirming a costly storage upgrade', () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const store = createGameStore({
+      runtime: throwingRuntime,
+      preloadedGame: {
+        ...structuredClone(initialGameState),
+        cash: 2_000_000,
+        savings: 2_000_000,
+      },
+    });
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    act(() => {
+      root.render(
+        <Provider store={store}>
+          <GameWindow onClose={() => undefined} onMinimize={() => undefined} />
+        </Provider>,
+      );
+    });
+
+    const rentButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent?.includes('租房中介'),
+    );
+    act(() => rentButton?.click());
+
+    const rentDialog = container.querySelector('[role="dialog"][aria-label="北京租房中介"]');
+    expect(rentDialog?.textContent).toContain('本次租金：1,002,000 元');
+    expect(rentDialog?.textContent).toContain('租房后现金：998,000 元');
+
+    const confirm = rentDialog?.querySelector<HTMLButtonElement>('.rentPlan');
+    act(() => confirm?.click());
+    expect(store.getState().game).toMatchObject({
+      cash: 998_000,
+      savings: 2_000_000,
+      maxStorage: 110,
+    });
+  });
+
   it('opens and closes airport information without changing game state', () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const store = createGameStore({
