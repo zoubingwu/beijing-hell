@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGameStore } from '../../app/store';
-import { initialGameState } from '../../game/gameSlice';
+import { deposit, initialGameState } from '../../game/gameSlice';
 import type { GameRuntime } from '../../game/runtime';
 import { GameWindow } from './GameWindow';
 
@@ -111,6 +111,47 @@ describe('GameWindow airport integration', () => {
     expect(died).toContain('健康降到零以下，本局结束');
     expect(diedWithUnrelatedFields).toContain('健康降到零以下，本局结束');
     expect(died).not.toContain('健康事件'); expect(died).not.toContain('欠债来源');
+  });
+
+  it('keeps auto-scrolling after the journal reaches its 80-entry cap', () => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const store = createGameStore({
+      runtime: throwingRuntime,
+      preloadedGame: {
+        ...structuredClone(initialGameState),
+        journal: Array.from({ length: 80 }, (_, index) => ({
+          id: index + 1,
+          day: 1,
+          text: `第 ${index + 1} 条日记`,
+          tone: 'info' as const,
+        })),
+        nextJournalId: 81,
+      },
+    });
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    containers.push(container);
+    const root = createRoot(container);
+    roots.push(root);
+
+    act(() => {
+      root.render(
+        <Provider store={store}>
+          <GameWindow onClose={() => undefined} onMinimize={() => undefined} />
+        </Provider>,
+      );
+    });
+
+    const journal = container.querySelector<HTMLDivElement>('.journalScroll');
+    expect(journal).not.toBeNull();
+    Object.defineProperty(journal, 'scrollHeight', { configurable: true, value: 1_234 });
+    if (journal) journal.scrollTop = 0;
+
+    act(() => store.dispatch(deposit(0)));
+
+    expect(store.getState().game.journal).toHaveLength(80);
+    expect(store.getState().game.journal.at(-1)?.id).toBe(81);
+    expect(journal?.scrollTop).toBe(1_234);
   });
 
   it('shows the exact rental charge before confirming a costly storage upgrade', () => {

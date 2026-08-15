@@ -165,6 +165,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
   const [menu, setMenu] = useState<MenuKind>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const journalRef = useRef<HTMLDivElement>(null);
+  const latestJournalEntryId = game.journal.at(-1)?.id;
   const closeMenu = useCallback(() => setMenu(null), []);
   useClickOutside(menuRef, closeMenu, menu !== null);
 
@@ -175,7 +176,7 @@ export function GameWindow({ onClose, onMinimize }: GameWindowProps) {
   useEffect(() => {
     const element = journalRef.current;
     if (element) element.scrollTop = element.scrollHeight;
-  }, [game.journal.length]);
+  }, [latestJournalEntryId]);
 
   useEffect(() => {
     const selectionExists = game.inventory.some(
