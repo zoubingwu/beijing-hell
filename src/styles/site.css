@@ -1,0 +1,74 @@
+.guideDialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  color: #000;
+  font: inherit;
+}
+
+.guideDialog::backdrop {
+  background: rgb(0 0 0 / 12%);
+}
+
+.guideDialog .dialogContent {
+  overscroll-behavior: contain;
+}
+
+.gameGuide {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.gameGuide h1 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.gameGuide h2 {
+  margin: 20px 0 10px;
+  font-size: 14px;
+}
+
+.gameGuide h3 {
+  margin: 16px 0 8px;
+  font-size: 12px;
+}
+
+.gameGuide p {
+  margin: 8px 0;
+}
+
+.gameGuide li {
+  margin: 8px 0;
+}
+
+.gameGuide a {
+  color: #000080;
+  text-underline-offset: 2px;
+}
+
+.gameGuide a:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: 2px;
+}
+
+.gameGuide ol {
+  padding-left: 24px;
+}
+
+.guideEyebrow {
+  color: #444;
+  font-size: 11px;
+}
+
+.guideNavigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 12px 0;
+}
+
+.gameNotice {
+  padding: 12px;
+  line-height: 1.6;
+}

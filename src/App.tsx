@@ -61,6 +61,14 @@ export default function App() {
         onClose={() => setStartOpen(false)}
         onOpenGame={openGame}
         onNewGame={startNewGame}
+        onOpenGuide={() => {
+          setStartOpen(false);
+          const guide = document.getElementById('game-guide');
+          if (guide instanceof HTMLDialogElement && !guide.open) {
+            document.querySelector<HTMLButtonElement>('.startButton')?.focus();
+            guide.showModal();
+          }
+        }}
       />
       <Taskbar
         gameOpen={gameOpen}

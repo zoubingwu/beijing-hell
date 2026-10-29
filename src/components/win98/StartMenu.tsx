@@ -7,6 +7,7 @@ interface StartMenuProps {
   onClose: () => void;
   onOpenGame: () => void;
   onNewGame: () => void;
+  onOpenGuide: () => void;
 }
 
 export function StartMenu({
@@ -14,6 +15,7 @@ export function StartMenu({
   onClose,
   onOpenGame,
   onNewGame,
+  onOpenGuide,
 }: StartMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, onClose, open);
@@ -36,9 +38,9 @@ export function StartMenu({
           <span><b>新游戏</b><small>从第一天重新开始</small></span>
         </button>
         <div className="startMenuSeparator" />
-        <button type="button" role="menuitem" onClick={onOpenGame}>
+        <button type="button" role="menuitem" onClick={onOpenGuide}>
           <span className="startMenuGlyph">?</span>
-          <span><b>游戏帮助</b><small>打开游戏后使用“帮助”菜单</small></span>
+          <span><b>玩法攻略</b><small>游戏说明与新手指南</small></span>
         </button>
       </div>
     </div>

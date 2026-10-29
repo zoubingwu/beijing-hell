@@ -4,13 +4,129 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#008080" />
-    <meta name="description" content="北京浮生记 Win98 风格 Web 重制版" />
-    <title>北京浮生记</title>
+    <title>北京浮生记网页版 - 免费在线玩经典经营游戏</title>
+    <meta name="description" content="北京浮生记网页版，免费在线玩，无需下载或注册。带着2000元和5500元欠款闯荡北京，在40天内买卖商品、应对随机事件。保留Win98怀旧界面，支持浏览器自动存档，附玩法说明与新手攻略。" />
+    <link rel="canonical" href="https://bjfsj.zoubingwu.com/" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="/src/styles/global.css" />
+    <link rel="stylesheet" href="/src/styles/site.css" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:site_name" content="北京浮生记网页版" />
+    <meta property="og:title" content="北京浮生记网页版 - 免费在线玩经典经营游戏" />
+    <meta property="og:description" content="2000元起步，40天闯荡北京。打开浏览器，重温Win98风格的北京浮生记，附玩法说明与新手攻略。" />
+    <meta property="og:url" content="https://bjfsj.zoubingwu.com/" />
+    <meta property="og:image" content="https://bjfsj.zoubingwu.com/social-card.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="北京浮生记网页版，Win98怀旧风格，2000元起步、40天闯荡北京" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="北京浮生记网页版 - 免费在线玩经典经营游戏" />
+    <meta name="twitter:description" content="2000元起步，40天闯荡北京。无需下载或注册，打开浏览器即可玩。" />
+    <meta name="twitter:image" content="https://bjfsj.zoubingwu.com/social-card.png" />
+    <meta name="twitter:image:alt" content="北京浮生记网页版的Win98风格游戏介绍卡片" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "@id": "https://bjfsj.zoubingwu.com/#game",
+        "name": "北京浮生记网页版",
+        "alternateName": ["北京浮生记", "Beijing Fushengji", "beijing-hell"],
+        "url": "https://bjfsj.zoubingwu.com/",
+        "description": "北京浮生记的免费浏览器重制版。带着2000元和5500元欠款，在40天内通过买卖商品闯荡北京，保留Win98风格界面并支持本地自动存档。",
+        "inLanguage": "zh-CN",
+        "genre": ["模拟经营", "回合制策略"],
+        "gamePlatform": "Web browser",
+        "playMode": "https://schema.org/SinglePlayer",
+        "isAccessibleForFree": true,
+        "image": "https://bjfsj.zoubingwu.com/social-card.png",
+        "sameAs": "https://github.com/zoubingwu/beijing-hell"
+      }
+    </script>
     <script>window.feasible=window.feasible||function(){(window.feasible.q=window.feasible.q||[]).push(arguments)};</script>
     <script defer src="https://analytics.inksphere.org/js/fs-brvq3wxbjpugmagv.js"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root" tabindex="-1" data-nosnippet>
+      <noscript>
+        <style>
+          body { overflow: auto; }
+          #root { height: auto; }
+          #game-guide { display: block; position: static; width: calc(100% - 24px); max-height: none; margin: 12px auto; }
+          #game-guide .dialogContent { max-height: none; }
+          #game-guide form { display: none; }
+        </style>
+        <p class="gameNotice">在线游戏需要启用 JavaScript。你可以先阅读下方玩法说明，再启用 JavaScript 开始游戏。</p>
+      </noscript>
+    </div>
+    <dialog id="game-guide" class="win98Dialog large guideDialog" aria-labelledby="guide-dialog-title">
+      <div class="titleBar dialogTitleBar">
+        <strong id="guide-dialog-title">北京浮生记 · 玩法攻略</strong>
+        <form method="dialog" class="windowControls">
+          <button type="submit" aria-label="关闭">×</button>
+        </form>
+      </div>
+      <div class="dialogContent">
+        <article class="gameGuide" aria-labelledby="guide-title">
+          <header>
+            <p class="guideEyebrow">WIN98 WEB 重制版 · 免费 · 无需注册</p>
+            <h1 id="guide-title">北京浮生记网页版</h1>
+            <p>带着2000元，欠着5500元，你能在40天内闯出什么名堂？</p>
+            <p>《北京浮生记》是一款以北京为背景的经典回合制经营游戏。这个网页版保留了 Windows 98 桌面与原版窗口风格，在浏览器中就能在线玩，无需下载安装，也不需要注册账号。</p>
+          </header>
+
+          <nav class="guideNavigation" aria-label="玩法指南目录">
+            <a href="#how-to-play">怎么玩</a>
+            <a href="#beginner-tips">新手攻略</a>
+            <a href="#game-faq">常见问题</a>
+            <a href="#about-remake">关于重制版</a>
+          </nav>
+
+          <section id="how-to-play" aria-labelledby="how-to-play-title">
+            <h2 id="how-to-play-title">北京浮生记怎么玩？</h2>
+            <p>开局有2000元现金和5500元欠款，最多可以在北京停留40天。你的目标是在有限的时间里买卖商品、偿还债务，尽可能积累财富。每次前往一个地点都会推进一天，市场报价也会重新变化。</p>
+            <ol>
+              <li><strong>查看黑市，低买高卖。</strong>在当前地点选择商品和数量买进，价格合适时再从库存卖出。货物占用背包空间，购买前要留意现金和剩余容量。</li>
+              <li><strong>换个地点，寻找机会。</strong>在建国门、北京站、西直门等地点之间移动，查看新的商品报价。路上可能触发随机事件，影响价格、健康、现金或债务。</li>
+              <li><strong>管理欠款和存款。</strong>前往新地点后，欠款增加10%利息，银行存款增加1%利息。通过邮局还款，通过银行存取钱，避免债务不断滚大。</li>
+              <li><strong>照顾健康，扩充容量。</strong>医院可以花钱恢复健康，租房中介可以增加储物空间。健康过低可能引发强制住院，同时消耗天数并增加欠款。</li>
+              <li><strong>留意最后一天。</strong>剩余天数归零时，会按当天事件后的报价自动卖出货物，以“现金 + 存款 - 债务”结算最终资产。手动提前结束不会自动卖货，请先处理库存。</li>
+            </ol>
+          </section>
+
+          <section id="beginner-tips" aria-labelledby="beginner-tips-title">
+            <h2 id="beginner-tips-title">新手攻略：先活下来，再积累财富</h2>
+            <h3>尽早控制债务</h3>
+            <p>欠款每次移动都增加10%，存款利息只有1%。赚到第一笔利润后，要在继续周转和偿还欠款之间做取舍；不要只看现金增长，也要看扣掉债务后的实际资产。</p>
+            <h3>观察报价和日记，给现金留余地</h3>
+            <p>商品价格会波动，随机商业事件也可能让价格大涨或大跌。先从买得起的商品熟悉行情，结合游戏日记判断变化。没有一种商品能保证赚钱，押满背包也意味着更难应付意外开支。</p>
+            <h3>把健康和剩余天数一起考虑</h3>
+            <p>健康过低可能导致住院甚至死亡，住院还会占用宝贵的交易天数。临近结算时，仔细检查库存、债务和现金，区分自动到期结算与手动提前结束，避免把没卖出的货物误算成财富。</p>
+          </section>
+
+          <section id="game-faq" aria-labelledby="game-faq-title">
+            <h2 id="game-faq-title">常见问题</h2>
+            <h3>北京浮生记网页版需要下载或付费吗？</h3>
+            <p>不需要。本站可以免费在线玩，打开支持 JavaScript 的现代浏览器即可进入游戏，无需下载客户端或注册账号。</p>
+            <h3>游戏会自动保存吗？刷新后还能继续玩吗？</h3>
+            <p>会。游戏进度和本机排行榜会自动保存到当前浏览器。使用同一个浏览器和同一个网址重新打开或刷新页面，可以继续已有进度。清理网站数据、使用无痕模式或更换设备，可能无法保留或访问原来的存档；存档不会跨设备同步。</p>
+            <h3>关闭游戏窗口后怎么重新打开？</h3>
+            <p>双击桌面上的“北京浮生记”图标，或点击任务栏的“开始”菜单重新打开游戏。窗口关闭不会清除已经保存的进度；选择“新游戏”并确认后才会重新开始。</p>
+            <h3>排行榜是全球排名吗？</h3>
+            <p>不是。富人榜记录当前浏览器中的本机 Top 10。完成一局后，最终资产为正并达到榜单门槛，就有机会留下名字。</p>
+          </section>
+
+          <section id="about-remake" aria-labelledby="about-remake-title">
+            <h2 id="about-remake-title">关于这个 Win98 风格重制版</h2>
+            <p>原作来自 Guoly Computing Company。本项目以浏览器重现《北京浮生记》的交易、随机事件、设施与结算规则，并增加本地自动存档和日记呈现。它是独立的 Web 重制项目，原版来源与规则对照记录可以在项目仓库中查看。</p>
+            <p><a href="https://github.com/zoubingwu/beijing-hell">查看网页版源码</a> · <a href="https://github.com/chrisguo/beijing_fushengji">查看原版源码</a></p>
+          </section>
+        </article>
+        <form method="dialog" class="dialogButtons">
+          <button class="win98Button defaultButton" type="submit">返回游戏</button>
+        </form>
+      </div>
+    </dialog>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

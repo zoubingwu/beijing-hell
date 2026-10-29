@@ -1,0 +1,7 @@
+# Keep Cloudflare's default domain and deployment previews out of search.
+# Do not use a global "index" header: it would override preview noindex protection.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex
